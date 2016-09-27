@@ -62,9 +62,9 @@ func NumActiveDisplays() int {
 	return count
 }
 
-func GetDisplayBounds(display_index int) image.Rectangle {
+func GetDisplayBounds(displayIndex int) image.Rectangle {
 	var ctx getMonitorBoundsContext
-	ctx.Index = display_index
+	ctx.Index = displayIndex
 	ctx.Count = 0
 	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(&ctx)))
 	return image.Rect(

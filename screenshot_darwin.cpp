@@ -195,9 +195,9 @@ uint32_t NumActiveDisplays()
     return count;
 }
 
-void GetDisplayBounds(int display_index, int* x, int* y, int* width, int* height)
+void GetDisplayBounds(int displayIndex, int* x, int* y, int* width, int* height)
 {
-    CGDirectDisplayID id = macGetDisplayId(display_index);
+    CGDirectDisplayID id = macGetDisplayId(displayIndex);
     CGRect bounds = macGetCoreGraphicsCoordinateOfDisplay(id);
     if (x) {
         *x = (int)bounds.origin.x;

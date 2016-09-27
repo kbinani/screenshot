@@ -27,19 +27,16 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	}
 }
 
-// Get the number of active displays.
 func NumActiveDisplays() int {
 	return int(C.NumActiveDisplays())
 }
 
-// Get the bounds of display_index'th display.
-// The main display is display_index = 0.
-func GetDisplayBounds(display_index int) image.Rectangle {
+func GetDisplayBounds(displayIndex int) image.Rectangle {
 	var x, y, w, h C.int
 	x = 0
 	y = 0
 	w = 0
 	h = 0
-	C.GetDisplayBounds(C.int(display_index), &x, &y, &w, &h)
+	C.GetDisplayBounds(C.int(displayIndex), &x, &y, &w, &h)
 	return image.Rect(int(x), int(y), int(x + w), int(y + h))
 }
