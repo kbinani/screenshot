@@ -1,5 +1,5 @@
 // Package screenshot captures screen-shot image as image.RGBA.
-// Mac(with cgo), and Windows(without cgo) are supported.
+// Mac, Windows, and Linux are supported.
 package screenshot
 
 import (
