@@ -1,4 +1,4 @@
-#include "screenshot.h"
+#include "screenshot_darwin.h"
 #include <CoreGraphics/CoreGraphics.h>
 #include <utility> // std::swap
 
@@ -48,38 +48,23 @@ template <> inline void scoped_cfref<CGContextRef>::release() { CGContextRelease
 extern "C" {
 #endif
 
-static uint32_t* createImage(int width, int height)
-{
-    uint32_t* data = (uint32_t*)malloc(width * height * sizeof(uint32_t));
-    memset(data, 0, sizeof(uint32_t) * width * height);
-    return data;
-}
-
-static void disposeImage(uint32_t* data)
-{
-    if (data) {
-        free(data);
-    }
-}
-
 static CGColorSpaceRef macCreateColorspace()
 {
     return CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
 }
 
-static CGContextRef macCreateBitmapContext(size_t width, size_t height)
+static CGContextRef macCreateBitmapContext(size_t width, size_t height, uint32_t* data, int bytesPerRow)
 {
     scoped_cfref<CGColorSpaceRef> colorSpace = macCreateColorspace();
     if (colorSpace == NULL) {
         return NULL;
     }
 
-    int const bits_per_component = 8;
-    CGContextRef context = CGBitmapContextCreate(NULL,
+    CGContextRef context = CGBitmapContextCreate(data,
                                                  width,
                                                  height,
-                                                 bits_per_component,
-                                                 0,
+                                                 8, // bits per component
+                                                 bytesPerRow,
                                                  colorSpace,
                                                  kCGImageAlphaNoneSkipFirst);
 
@@ -123,10 +108,13 @@ static CGRect macGetCoreGraphicsCoordinateOfDisplay(CGDirectDisplayID id)
                       r.size.width, r.size.height);
 }
 
-uint32_t* Capture(int x, int y, int width, int height)
+int Capture(int x, int y, int width, int height, uint32_t* dest, int bytesPerRow)
 {
     if (width <= 0 || height <= 0) {
-        return NULL;
+        return -2;
+    }
+    if (!dest) {
+        return -1;
     }
 
     CGRect mainDisplayBounds = macGetCoreGraphicsCoordinateOfDisplay(CGMainDisplayID());
@@ -139,21 +127,14 @@ uint32_t* Capture(int x, int y, int width, int height)
     uint32_t count = 0;
     CGGetActiveDisplayList(sizeof(ids) / sizeof(CGDirectDisplayID), ids, &count);
 
-    uint32_t* data = createImage(width, height);
-    if (!data) {
-        return NULL;
-    }
-    scoped_cfref<CGContextRef> cgctx = macCreateBitmapContext(width, height);
+    scoped_cfref<CGContextRef> cgctx = macCreateBitmapContext(width, height, dest, bytesPerRow);
     if (!cgctx) {
-        disposeImage(data);
-        return NULL;
+        return 1;
     }
 
     scoped_cfref<CGColorSpaceRef> colorSpace = macCreateColorspace();
     if (!colorSpace) {
-        CFRelease(cgctx);
-        disposeImage(data);
-        return NULL;
+        return 2;
     }
 
     for (uint32_t i = 0; i < count; ++i) {
@@ -192,17 +173,18 @@ uint32_t* Capture(int x, int y, int width, int height)
         CGContextDrawImage(cgctx, drawRect, image);
     }
 
-    uint8_t* ptr = (uint8_t*)CGBitmapContextGetData(cgctx);
-    int const bytesPerRow = CGBitmapContextGetBytesPerRow(cgctx);
-    int const bytesPerPixel = CGBitmapContextGetBitsPerPixel(cgctx) / 8;
+    uint8_t* ptr = (uint8_t*)dest;
     for (int iy = 0; iy < height; ++iy) {
+        uint32_t* data = (uint32_t*)ptr;
         for (int ix = 0; ix < width; ++ix) {
-            uint8_t* p = ptr + (iy * bytesPerRow + ix * bytesPerPixel);
-            data[iy * width + ix] = *(uint32_t*)p;
+            // BGRA => ABGR, and set A to 255
+            *data = 0xff000000 | ((*data) >> 8);
+            ++data;
         }
+        ptr += bytesPerRow;
     }
 
-    return data;
+    return 0;
 }
 
 uint32_t NumActiveDisplays()
@@ -236,11 +218,6 @@ void GetDisplayBounds(int display_index, int* x, int* y, int* width, int* height
     if (height) {
         *height = (int)bounds.size.height;
     }
-}
-
-void Dispose(uint32_t* data)
-{
-    disposeImage(data);
 }
 
 #ifdef __cplusplus
