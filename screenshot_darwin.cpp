@@ -22,12 +22,18 @@ public:
 
     scoped_cfref(scoped_cfref&& other)
     {
-        std::swap(o_, other.o_);
+        *this = std::move(other);
     }
 
-    scoped_cfref& operator = (scoped_cfref&& other)
+    scoped_cfref& operator = (scoped_cfref&& other) noexcept
     {
-        std::swap(o_, other.o_);
+        if (this != &other) {
+            if (o_) {
+                release();
+            }
+            o_ = other.o_;
+            other.o_ = nullptr;
+        }
         return *this;
     }
 

@@ -11,11 +11,15 @@ import (
 	"image"
 	"errors"
 	"unsafe"
+	"github.com/kbinani/screenshot/internal/util"
 )
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
 	rect := image.Rect(0, 0, width, height)
-	img := image.NewRGBA(rect)
+	img, err := util.CreateImage(rect)
+	if err != nil {
+		return nil, err
+	}
 
 	ret := C.Capture(C.int(x), C.int(y),
 		C.int(width), C.int(height),

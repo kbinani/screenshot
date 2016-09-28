@@ -6,6 +6,7 @@ import (
 	"syscall"
 	"errors"
 	win "github.com/lxn/win"
+	"github.com/kbinani/screenshot/internal/util"
 )
 
 var (
@@ -16,7 +17,10 @@ var (
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
 	rect := image.Rect(0, 0, width, height)
-	img := image.NewRGBA(rect)
+	img, err := util.CreateImage(rect)
+	if err != nil {
+		return nil, err
+	}
 
 	hwnd := getDesktopWindow()
 	hdc := win.GetDC(hwnd)

@@ -3,6 +3,7 @@ package xwindow
 import (
 	"image"
 	"image/color"
+	"github.com/kbinani/screenshot/internal/util"
 	"github.com/BurntSushi/xgb"
 	"github.com/BurntSushi/xgb/xproto"
 	"github.com/BurntSushi/xgb/xinerama"
@@ -31,7 +32,10 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	intersect := wholeScreenBounds.Intersect(targetBounds)
 
 	rect := image.Rect(0, 0, width, height)
-	img := image.NewRGBA(rect)
+	img, err := util.CreateImage(rect)
+	if err != nil {
+		return nil, err
+	}
 
 	// Paint with opaque black
 	index := 0
