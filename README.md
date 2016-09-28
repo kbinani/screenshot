@@ -1,7 +1,7 @@
 screenshot
 ==========
 
-[![](https://img.shields.io/badge/godoc-reference-556faf.svg)](https://godoc.org/github.com/kbinani/screenshot)
+[![](https://img.shields.io/badge/godoc-reference-5566aa.svg)](https://godoc.org/github.com/kbinani/screenshot)
 ![](https://img.shields.io/badge/license-MIT-green.svg?style=flat)
 
 * Go library to capture desktop screen.
@@ -16,21 +16,20 @@ example
 
 	```go
 	package main
-	
+
 	import (
 		"github.com/kbinani/screenshot"
 		"image/png"
 		"os"
 		"fmt"
 	)
-	
+
 	func main() {
 		n := screenshot.NumActiveDisplays()
-	
+
 		for i := 0; i < n; i++ {
 			bounds := screenshot.GetDisplayBounds(i)
-			fmt.Printf("#%d : %v\n", i, bounds)
-	
+
 			img, err := screenshot.CaptureRect(bounds)
 			if err != nil {
 				panic(err)
@@ -39,6 +38,8 @@ example
 			file, _ := os.Create(fileName)
 			defer file.Close()
 			png.Encode(file, img)
+
+			fmt.Printf("#%d : %v \"%s\"\n", i, bounds, fileName)
 		}
 	}
 	```
@@ -59,7 +60,7 @@ example
 
 coordinate
 =================
-Y-axis is downward direction in this library. This means coordinate system is similar to Windows OS. The origin of coordinate is upper-left corner of main display.
+Y-axis is downward direction in this library. The origin of coordinate is upper-left corner of main display. This means coordinate system is similar to Windows OS
 
 license
 =======
