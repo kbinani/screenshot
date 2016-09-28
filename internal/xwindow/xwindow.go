@@ -1,6 +1,8 @@
 package xwindow
 
 import (
+	"fmt"
+	"errors"
 	"image"
 	"image/color"
 	"github.com/kbinani/screenshot/internal/util"
@@ -9,7 +11,14 @@ import (
 	"github.com/BurntSushi/xgb/xinerama"
 )
 
-func Capture(x, y, width, height int) (*image.RGBA, error) {
+func Capture(x, y, width, height int) (img *image.RGBA, e error) {
+	defer func () {
+		err := recover()
+		if err != nil {
+			img = nil
+			e = errors.New(fmt.Sprintf("%v", err))
+		}
+	} ()
 	c, err := xgb.NewConn()
 	if err != nil {
 		return nil, err
@@ -32,7 +41,7 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	intersect := wholeScreenBounds.Intersect(targetBounds)
 
 	rect := image.Rect(0, 0, width, height)
-	img, err := util.CreateImage(rect)
+	img, err = util.CreateImage(rect)
 	if err != nil {
 		return nil, err
 	}
@@ -69,10 +78,17 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 		}
 	}
 
-	return img, nil
+	return img, e
 }
 
-func NumActiveDisplays() int {
+func NumActiveDisplays() (num int) {
+	defer func () {
+		e := recover()
+		if e != nil {
+			num = 0
+		}
+	} ()
+
 	c, err := xgb.NewConn()
 	if err != nil {
 		return 0
@@ -89,10 +105,18 @@ func NumActiveDisplays() int {
 		return 0
 	}
 
-	return int(reply.Number)
+	num = int(reply.Number)
+	return num
 }
 
-func GetDisplayBounds(displayIndex int) image.Rectangle {
+func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
+	defer func () {
+		e := recover()
+		if e != nil {
+			rect = image.ZR
+		}
+	} ()
+
 	c, err := xgb.NewConn()
 	if err != nil {
 		return image.ZR
@@ -119,5 +143,7 @@ func GetDisplayBounds(displayIndex int) image.Rectangle {
 	y := int(screen.YOrg) - y0
 	w := int(screen.Width)
 	h := int(screen.Height)
-	return image.Rect(x, y, x + w, y + h)
+	rect = image.Rect(x, y, x + w, y + h)
+	return rect
 }
+
