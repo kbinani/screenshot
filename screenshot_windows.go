@@ -2,9 +2,9 @@ package screenshot
 
 import (
 	"image"
-	"image/color"
 	"unsafe"
 	"syscall"
+	"errors"
 	win "github.com/lxn/win"
 )
 
@@ -15,11 +15,28 @@ var (
 )
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
+	rect := image.Rect(0, 0, width, height)
+	img := image.NewRGBA(rect)
+
 	hwnd := getDesktopWindow()
 	hdc := win.GetDC(hwnd)
-	data := make([]uint32, width * height)
+	if hdc == 0 {
+		return nil, errors.New("GetDC failed")
+	}
+	defer win.ReleaseDC(hwnd, hdc)
+
 	memory_device := win.CreateCompatibleDC(hdc)
+	if memory_device == 0 {
+		return nil, errors.New("CreateCompatibleDC failed")
+	}
+	defer win.DeleteDC(memory_device)
+
 	bitmap := win.CreateCompatibleBitmap(hdc, int32(width), int32(height))
+	if bitmap == 0 {
+		return nil, errors.New("CreateCompatibleBitmap failed")
+	}
+	defer win.DeleteObject(win.HGDIOBJ(bitmap))
+
 	var header win.BITMAPINFOHEADER
 	header.BiSize = uint32(unsafe.Sizeof(header))
 	header.BiPlanes = 1
@@ -28,28 +45,28 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	header.BiHeight = int32(-height)
 	header.BiCompression = win.BI_RGB
 	header.BiSizeImage = 0
-	win.SelectObject(memory_device, win.HGDIOBJ(bitmap))
-	win.BitBlt(memory_device, 0, 0, int32(width), int32(height), hdc, int32(x), int32(y), win.SRCCOPY)
-	win.GetDIBits(hdc, bitmap, 0, uint32(height), (*byte)(unsafe.Pointer(&data[0])), (*win.BITMAPINFO)(unsafe.Pointer(&header)), win.DIB_RGB_COLORS)
-	win.ReleaseDC(hwnd, hdc)
-	win.DeleteDC(memory_device)
 
-	rect := image.Rect(0, 0, width, height)
-	img := image.NewRGBA(rect)
+	old := win.SelectObject(memory_device, win.HGDIOBJ(bitmap))
+	if old == 0 {
+		return nil, errors.New("SelectObject failed")
+	}
+	defer win.SelectObject(memory_device, old)
 
-	var col color.RGBA
+	if !win.BitBlt(memory_device, 0, 0, int32(width), int32(height), hdc, int32(x), int32(y), win.SRCCOPY) {
+		return nil, errors.New("BitBlt failed")
+	}
+
+	if win.GetDIBits(hdc, bitmap, 0, uint32(height), (*byte)(unsafe.Pointer(&img.Pix[0])), (*win.BITMAPINFO)(unsafe.Pointer(&header)), win.DIB_RGB_COLORS) == 0 {
+		return nil, errors.New("GetDIBits failed")
+	}
+
 	i := 0
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
-			c := data[i]
+			// BGRA => RGBA, and set A to 255
+			img.Pix[i], img.Pix[i + 2], img.Pix[i + 3] = img.Pix[i + 2], img.Pix[i], 255
 
-			col.A = 255
-			col.R = (uint8)(0xff & (c >> 16))
-			col.G = (uint8)(0xff & (c >> 8))
-			col.B = (uint8)(0xff & (c))
-
-			img.Set(x, y, col)
-			i++
+			i += 4
 		}
 	}
 
