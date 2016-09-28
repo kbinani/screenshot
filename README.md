@@ -5,8 +5,8 @@ screenshot
 ![](https://img.shields.io/badge/license-MIT-green.svg?style=flat)
 
 * Go library to capture desktop screen.
-* Support Windows, Mac, and Linux environment.
-* `cgo` free for Windows and Linux.
+* Support Windows, Mac, Linux, and FreeBSD environment.
+* `cgo` free for Windows, Linux, and FreeBSD.
 * Multiple display supported.
 
 example
