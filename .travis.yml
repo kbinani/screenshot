@@ -1,0 +1,6 @@
+language: cpp
+os: osx
+env:
+  - GOOS=linux GOARCH=amd64
+install: ./travis-install-go.sh
+script: ./travis-build.sh
