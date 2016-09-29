@@ -1,8 +1,8 @@
 package util
 
 import (
-	"image"
 	"errors"
+	"image"
 )
 
 func CreateImage(rect image.Rectangle) (img *image.RGBA, e error) {
@@ -14,7 +14,7 @@ func CreateImage(rect image.Rectangle) (img *image.RGBA, e error) {
 		if err == nil {
 			e = nil
 		}
-	} ()
+	}()
 	// image.NewRGBA may panic if rect is too large.
 	img = image.NewRGBA(rect)
 

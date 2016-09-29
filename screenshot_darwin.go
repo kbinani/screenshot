@@ -8,10 +8,10 @@ package screenshot
 import "C"
 
 import (
-	"image"
 	"errors"
-	"unsafe"
 	"github.com/kbinani/screenshot/internal/util"
+	"image"
+	"unsafe"
 )
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
@@ -42,5 +42,5 @@ func GetDisplayBounds(displayIndex int) image.Rectangle {
 	w = 0
 	h = 0
 	C.GetDisplayBounds(C.int(displayIndex), &x, &y, &w, &h)
-	return image.Rect(int(x), int(y), int(x + w), int(y + h))
+	return image.Rect(int(x), int(y), int(x+w), int(y+h))
 }

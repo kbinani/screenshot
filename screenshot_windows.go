@@ -1,17 +1,17 @@
 package screenshot
 
 import (
-	"image"
-	"unsafe"
-	"syscall"
 	"errors"
-	win "github.com/lxn/win"
 	"github.com/kbinani/screenshot/internal/util"
+	win "github.com/lxn/win"
+	"image"
+	"syscall"
+	"unsafe"
 )
 
 var (
-	libUser32, _ = syscall.LoadLibrary("user32.dll")
-	funcGetDesktopWindow, _ = syscall.GetProcAddress(syscall.Handle(libUser32), "GetDesktopWindow")
+	libUser32, _               = syscall.LoadLibrary("user32.dll")
+	funcGetDesktopWindow, _    = syscall.GetProcAddress(syscall.Handle(libUser32), "GetDesktopWindow")
 	funcEnumDisplayMonitors, _ = syscall.GetProcAddress(syscall.Handle(libUser32), "EnumDisplayMonitors")
 )
 
@@ -68,7 +68,7 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			// BGRA => RGBA, and set A to 255
-			img.Pix[i], img.Pix[i + 2], img.Pix[i + 3] = img.Pix[i + 2], img.Pix[i], 255
+			img.Pix[i], img.Pix[i+2], img.Pix[i+3] = img.Pix[i+2], img.Pix[i], 255
 
 			i += 4
 		}
@@ -90,7 +90,7 @@ func GetDisplayBounds(displayIndex int) image.Rectangle {
 	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(&ctx)))
 	return image.Rect(
 		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right - ctx.Rect.Left), int(ctx.Rect.Bottom - ctx.Rect.Top))
+		int(ctx.Rect.Right-ctx.Rect.Left), int(ctx.Rect.Bottom-ctx.Rect.Top))
 }
 
 func getDesktopWindow() win.HWND {
@@ -118,7 +118,7 @@ func countupMonitorCallback(hMonitor win.HMONITOR, hdcMonitor win.HDC, lprcMonit
 
 type getMonitorBoundsContext struct {
 	Index int
-	Rect win.RECT
+	Rect  win.RECT
 	Count int
 }
 

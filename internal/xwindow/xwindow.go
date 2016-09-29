@@ -1,24 +1,24 @@
 package xwindow
 
 import (
-	"fmt"
 	"errors"
+	"fmt"
+	"github.com/BurntSushi/xgb"
+	"github.com/BurntSushi/xgb/xinerama"
+	"github.com/BurntSushi/xgb/xproto"
+	"github.com/kbinani/screenshot/internal/util"
 	"image"
 	"image/color"
-	"github.com/kbinani/screenshot/internal/util"
-	"github.com/BurntSushi/xgb"
-	"github.com/BurntSushi/xgb/xproto"
-	"github.com/BurntSushi/xgb/xinerama"
 )
 
 func Capture(x, y, width, height int) (img *image.RGBA, e error) {
-	defer func () {
+	defer func() {
 		err := recover()
 		if err != nil {
 			img = nil
 			e = errors.New(fmt.Sprintf("%v", err))
 		}
-	} ()
+	}()
 	c, err := xgb.NewConn()
 	if err != nil {
 		return nil, err
@@ -37,7 +37,7 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 
 	screen := xproto.Setup(c).DefaultScreen(c)
 	wholeScreenBounds := image.Rect(0, 0, int(screen.WidthInPixels), int(screen.HeightInPixels))
-	targetBounds := image.Rect(x + x0, y + y0, x + x0 + width, y + y0 + height)
+	targetBounds := image.Rect(x+x0, y+y0, x+x0+width, y+y0+height)
 	intersect := wholeScreenBounds.Intersect(targetBounds)
 
 	rect := image.Rect(0, 0, width, height)
@@ -51,7 +51,7 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 	for iy := 0; iy < height; iy++ {
 		j := index
 		for ix := 0; ix < width; ix++ {
-			img.Pix[j + 3] = 255
+			img.Pix[j+3] = 255
 			j += 4
 		}
 		index += img.Stride
@@ -59,8 +59,8 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 
 	if !intersect.Empty() {
 		xImg, err := xproto.GetImage(c, xproto.ImageFormatZPixmap, xproto.Drawable(screen.Root),
-					     int16(intersect.Min.X), int16(intersect.Min.Y),
-					     uint16(intersect.Dx()), uint16(intersect.Dy()), 0xffffffff).Reply()
+			int16(intersect.Min.X), int16(intersect.Min.Y),
+			uint16(intersect.Dx()), uint16(intersect.Dy()), 0xffffffff).Reply()
 		if err != nil {
 			return nil, err
 		}
@@ -69,10 +69,10 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 		offset := 0
 		for iy := intersect.Min.Y; iy < intersect.Max.Y; iy++ {
 			for ix := intersect.Min.X; ix < intersect.Max.X; ix++ {
-				r := xImg.Data[offset + 2]
-				g := xImg.Data[offset + 1]
+				r := xImg.Data[offset+2]
+				g := xImg.Data[offset+1]
 				b := xImg.Data[offset]
-				img.SetRGBA(ix - (x + x0), iy - (y + y0), color.RGBA{r, g, b, 255})
+				img.SetRGBA(ix-(x+x0), iy-(y+y0), color.RGBA{r, g, b, 255})
 				offset += 4
 			}
 		}
@@ -82,12 +82,12 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 }
 
 func NumActiveDisplays() (num int) {
-	defer func () {
+	defer func() {
 		e := recover()
 		if e != nil {
 			num = 0
 		}
-	} ()
+	}()
 
 	c, err := xgb.NewConn()
 	if err != nil {
@@ -110,12 +110,12 @@ func NumActiveDisplays() (num int) {
 }
 
 func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
-	defer func () {
+	defer func() {
 		e := recover()
 		if e != nil {
 			rect = image.ZR
 		}
-	} ()
+	}()
 
 	c, err := xgb.NewConn()
 	if err != nil {
@@ -143,7 +143,6 @@ func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
 	y := int(screen.YOrg) - y0
 	w := int(screen.Width)
 	h := int(screen.Height)
-	rect = image.Rect(x, y, x + w, y + h)
+	rect = image.Rect(x, y, x+w, y+h)
 	return rect
 }
-
