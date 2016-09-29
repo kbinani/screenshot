@@ -41,4 +41,6 @@ fi
 (
 	cd "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG"
 	go build example/main.go || exit 1
+	echo "Built successfully"
+	ls -la
 ) || exit 14

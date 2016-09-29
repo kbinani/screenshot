@@ -2,5 +2,11 @@ language: cpp
 os: osx
 env:
   - GOOS=linux GOARCH=amd64
+  - GOOS=darwin GOARCH=amd64
+  - GOOS=freebsd GOARCH=amd64
+  - GOOS=windows GOARCH=amd64
+branches:
+  only:
+  - master
 install: ./travis-install-go.sh
 script: ./travis-build.sh
