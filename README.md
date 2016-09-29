@@ -1,8 +1,8 @@
 screenshot
 ==========
 
-[![](https://img.shields.io/badge/godoc-reference-5566aa.svg)](https://godoc.org/github.com/kbinani/screenshot)
-![](https://img.shields.io/badge/license-MIT-green.svg?style=flat)
+[![](https://img.shields.io/badge/godoc-reference-5272B4.svg)](https://godoc.org/github.com/kbinani/screenshot)
+[![](https://img.shields.io/badge/license-MIT-428F7E.svg?style=flat)](https://github.com/kbinani/screenshot/blob/master/LICENSE)
 
 * Go library to capture desktop screen.
 * Support Windows, Mac, Linux, and FreeBSD environment.
