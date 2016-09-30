@@ -9,6 +9,8 @@ env:
     - GOOS=darwin
     - GOOS=freebsd
     - GOOS=windows
+    - GOOS=openbsd
+    - GOOS=netbsd
 branches:
   only:
   - master
