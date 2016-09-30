@@ -1,12 +1,20 @@
 language: cpp
 os: osx
 env:
-  - GOOS=linux GOARCH=amd64
-  - GOOS=darwin GOARCH=amd64
-  - GOOS=freebsd GOARCH=amd64
-  - GOOS=windows GOARCH=amd64
+  global:
+    - GOARCH=amd64
+    - GO_VERSION=1.7.1
+  matrix:
+    - GOOS=linux
+    - GOOS=darwin
+    - GOOS=freebsd
+    - GOOS=windows
 branches:
   only:
   - master
-install: ./travis-install-go.sh
-script: ./travis-build.sh
+install: ./.travis/install-go.sh
+script: ./.travis/build.sh
+cache:
+  directories:
+  - $HOME/go$GO_VERSION
+  - $HOME/gobootstrap$GO_VERSION
