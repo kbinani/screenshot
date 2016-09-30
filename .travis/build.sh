@@ -1,8 +1,8 @@
 #!/bin/bash
 
 [ -n "$TEMP" ] || export TEMP=/tmp
-export GOROOT="$HOME/go"
-export GOROOT_BOOTSTRAP="$HOME/gobootstrap"
+export GOROOT="$HOME/go$GO_VERSION"
+export GOROOT_BOOTSTRAP="$HOME/gobootstrap$GO_VERSION"
 export GOPATH="$TEMP/gopath"
 export PATH="$GOROOT/bin:$PATH"
 
@@ -17,13 +17,18 @@ env | grep -e ^GO -e ^PATH -e ^TRAVIS -e ^TEMP | sort
 [ -d "$GOROOT" ] || exit 6
 [ -d "$GOROOT_BOOTSTRAP" ] || exit 7
 
+which go
 go version || exit 8
 
 # setup cross compile environment
-(
-	cd "$GOROOT/src"
-	./make.bash || exit 1
-) || exit 9
+if [ "${GOOS}_${GOARCH}" != "$(go env GOHOSTOS)_$(go env GOHOSTARCH)" ]; then
+	if [ ! -f "$GOROOT/bin/${GOOS}_${GOARCH}/go" ]; then
+		(
+			cd "$GOROOT/src"
+			./make.bash || exit 1
+		) || exit 9
+	fi
+fi
 
 # copy workspace files to GOPATH
 rm -rf "$GOPATH"
