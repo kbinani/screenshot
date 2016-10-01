@@ -1,5 +1,5 @@
 // Package screenshot captures screen-shot image as image.RGBA.
-// Mac, Windows, Linux, and FreeBSD are supported.
+// Mac, Windows, Linux, FreeBSD, OpenBSD, and NetBSD are supported.
 package screenshot
 
 import (
