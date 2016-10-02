@@ -11,6 +11,7 @@ env:
     - GOOS=windows
     - GOOS=openbsd
     - GOOS=netbsd
+    - GOOS=solaris
 branches:
   only:
   - master

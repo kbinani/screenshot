@@ -36,7 +36,7 @@ mkdir -p "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG" || exit 10
 cp -R "$TRAVIS_BUILD_DIR" "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.." || exit 11
 
 # install dependencies
-if [ "$GOOS" = "linux" -o "$GOOS" = "freebsd" -o "$GOOS" = "openbsd" -o "$GOOS" = "netbsd" ]; then
+if [ "$GOOS" = "linux" -o "$GOOS" = "freebsd" -o "$GOOS" = "openbsd" -o "$GOOS" = "netbsd" -o "$GOOS" = "solaris" ]; then
 	go get github.com/BurntSushi/xgb || exit 12
 elif [ "$GOOS" = "windows" ]; then
 	go get github.com/lxn/win || exit 13
