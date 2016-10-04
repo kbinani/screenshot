@@ -19,5 +19,4 @@ install: ./.travis/install-go.sh
 script: ./.travis/build.sh
 cache:
   directories:
-  - $HOME/go$GO_VERSION
-  - $HOME/gobootstrap$GO_VERSION
+  - $HOME/cache/$TRAVIS_REPO_SLUG
