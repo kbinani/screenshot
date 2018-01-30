@@ -1,17 +1,23 @@
 language: cpp
-os: osx
 env:
-  global:
-    - GOARCH=amd64
-    - GO_VERSION=1.7.1
-  matrix:
-    - GOOS=linux
-    - GOOS=darwin
-    - GOOS=freebsd
-    - GOOS=windows
-    - GOOS=openbsd
-    - GOOS=netbsd
-    - GOOS=solaris
+  - GOARCH=amd64
+  - GO_VERSION=1.7.1
+matrix:
+  include:
+    - os: osx
+      env: GOOS=darwin
+    - os: linux
+      env: GOOS=linux
+    - os: linux
+      env: GOOS=freebsd
+    - os: linux
+      env: GOOS=windows
+    - os: linux
+      env: GOOS=openbsd
+    - os: linux
+      env: GOOS=netbsd
+    - os: linux
+      env: GOOS=solaris
 branches:
   only:
   - master
