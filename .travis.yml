@@ -1,7 +1,8 @@
 language: cpp
 env:
-  - GOARCH=amd64
-  - GO_VERSION=1.7.1
+  global:
+    - GOARCH=amd64
+    - GO_VERSION=1.7.1
 matrix:
   include:
     - os: osx
