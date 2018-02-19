@@ -1,4 +1,4 @@
-// +build go1.10
+// +build darwin,!go1.10
 
 package screenshot
 
@@ -38,12 +38,12 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	ids := activeDisplayList()
 
 	ctx := createBitmapContext(width, height, (*C.uint32_t)(unsafe.Pointer(&img.Pix[0])), img.Stride)
-	if ctx == 0 {
+	if ctx == nil {
 		return nil, errors.New("cannot create bitmap context")
 	}
 
 	colorSpace := createColorspace()
-	if colorSpace == 0 {
+	if colorSpace == nil {
 		return nil, errors.New("cannot create colorspace")
 	}
 	defer C.CGColorSpaceRelease(colorSpace)
@@ -168,8 +168,8 @@ func getCoreGraphicsCoordinateFromWindowsCoordinate(p C.CGPoint, mainDisplayBoun
 
 func createBitmapContext(width int, height int, data *C.uint32_t, bytesPerRow int) C.CGContextRef {
 	colorSpace := createColorspace()
-	if colorSpace == 0 {
-		return 0
+	if colorSpace == nil {
+		return nil
 	}
 	defer C.CGColorSpaceRelease(colorSpace)
 
