@@ -1,4 +1,4 @@
-// +build !go1.10
+// +build darwin,!go1.10
 
 package screenshot
 
