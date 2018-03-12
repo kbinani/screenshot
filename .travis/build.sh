@@ -38,8 +38,9 @@ cp -R "$TRAVIS_BUILD_DIR" "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.." || exit 
 # install dependencies
 if [ "$GOOS" = "linux" -o "$GOOS" = "freebsd" -o "$GOOS" = "openbsd" -o "$GOOS" = "netbsd" -o "$GOOS" = "solaris" ]; then
 	go get github.com/BurntSushi/xgb || exit 12
+	go get github.com/gen2brain/shm || exit 13
 elif [ "$GOOS" = "windows" ]; then
-	go get github.com/lxn/win || exit 13
+	go get github.com/lxn/win || exit 14
 fi
 
 # build example/main.go
@@ -48,4 +49,4 @@ fi
 	go build example/main.go || exit 1
 	echo "Built successfully"
 	ls -la
-) || exit 14
+) || exit 15

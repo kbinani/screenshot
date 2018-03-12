@@ -25,9 +25,9 @@ matrix:
     - os: linux
       env: GOOS=netbsd
            GO_VERSION=1.9.4
-    - os: linux
-      env: GOOS=solaris
-           GO_VERSION=1.9.4
+    #- os: linux
+      #env: GOOS=solaris
+           #GO_VERSION=1.9.4
 branches:
   only:
   - master
