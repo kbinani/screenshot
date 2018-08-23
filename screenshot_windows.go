@@ -50,6 +50,15 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	header.BiCompression = win.BI_RGB
 	header.BiSizeImage = 0
 
+	// GetDIBits balks at using Go memory on some systems. The MSDN example uses
+	// GlobalAlloc, so we'll do that too. See:
+	// https://docs.microsoft.com/en-gb/windows/desktop/gdi/capturing-an-image
+	bitmapDataSize := uintptr(((int64(width)*int64(header.BiBitCount) + 31) / 32) * 4 * int64(height))
+	hmem := win.GlobalAlloc(win.GMEM_MOVEABLE, bitmapDataSize)
+	defer win.GlobalFree(hmem)
+	memptr := win.GlobalLock(hmem)
+	defer win.GlobalUnlock(hmem)
+
 	old := win.SelectObject(memory_device, win.HGDIOBJ(bitmap))
 	if old == 0 {
 		return nil, errors.New("SelectObject failed")
@@ -60,17 +69,23 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 		return nil, errors.New("BitBlt failed")
 	}
 
-	if win.GetDIBits(hdc, bitmap, 0, uint32(height), (*byte)(unsafe.Pointer(&img.Pix[0])), (*win.BITMAPINFO)(unsafe.Pointer(&header)), win.DIB_RGB_COLORS) == 0 {
+	if win.GetDIBits(hdc, bitmap, 0, uint32(height), (*uint8)(memptr), (*win.BITMAPINFO)(unsafe.Pointer(&header)), win.DIB_RGB_COLORS) == 0 {
 		return nil, errors.New("GetDIBits failed")
 	}
 
 	i := 0
+	src := uintptr(memptr)
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
+			v0 := *(*uint8)(unsafe.Pointer(src))
+			v1 := *(*uint8)(unsafe.Pointer(src + 1))
+			v2 := *(*uint8)(unsafe.Pointer(src + 2))
+
 			// BGRA => RGBA, and set A to 255
-			img.Pix[i], img.Pix[i+2], img.Pix[i+3] = img.Pix[i+2], img.Pix[i], 255
+			img.Pix[i], img.Pix[i+1], img.Pix[i+2], img.Pix[i+3] = v2, v1, v0, 255
 
 			i += 4
+			src += 4
 		}
 	}
 
