@@ -6,6 +6,9 @@ matrix:
   include:
     - os: osx
       env: GOOS=darwin
+           GO_VERSION=1.11
+    - os: osx
+      env: GOOS=darwin
            GO_VERSION=1.10
     - os: osx
       env: GOOS=darwin

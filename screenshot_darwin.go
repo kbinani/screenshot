@@ -2,8 +2,26 @@
 
 package screenshot
 
-// #cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation
-// #include <CoreGraphics/CoreGraphics.h>
+/*
+#cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation
+#include <CoreGraphics/CoreGraphics.h>
+
+void* CompatCGDisplayCreateImageForRect(CGDirectDisplayID display, CGRect rect) {
+	return CGDisplayCreateImageForRect(display, rect);
+}
+
+void CompatCGImageRelease(void* image) {
+	CGImageRelease(image);	
+}
+
+void* CompatCGImageCreateCopyWithColorSpace(void* image, CGColorSpaceRef space) {
+	return CGImageCreateCopyWithColorSpace((CGImageRef)image, space);
+}
+
+void CompatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
+	CGContextDrawImage(c, rect, (CGImageRef)image);
+}
+*/
 import "C"
 
 import (
@@ -69,21 +87,21 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 		diIntersectDisplayLocal := C.CGRectMake(cgIntersect.origin.x-cgBounds.origin.x,
 			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
 			cgIntersect.size.width, cgIntersect.size.height)
-		captured := C.CGDisplayCreateImageForRect(id, diIntersectDisplayLocal)
+		captured := C.CompatCGDisplayCreateImageForRect(id, diIntersectDisplayLocal)
 		if captured == nil {
 			return nil, errors.New("cannot capture display")
 		}
-		defer C.CGImageRelease(captured)
+		defer C.CompatCGImageRelease(captured)
 
-		image := C.CGImageCreateCopyWithColorSpace(captured, colorSpace)
+		image := C.CompatCGImageCreateCopyWithColorSpace(captured, colorSpace)
 		if image == nil {
 			return nil, errors.New("failed copying captured image")
 		}
-		defer C.CGImageRelease(image)
+		defer C.CompatCGImageRelease(image)
 
 		cgDrawRect := C.CGRectMake(cgIntersect.origin.x-cgCaptureBounds.origin.x, cgIntersect.origin.y-cgCaptureBounds.origin.y,
 			cgIntersect.size.width, cgIntersect.size.height)
-		C.CGContextDrawImage(ctx, cgDrawRect, image)
+		C.CompatCGContextDrawImage(ctx, cgDrawRect, image)
 	}
 
 	i := 0
