@@ -29,6 +29,10 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 	defer c.Close()
 
 	err = xinerama.Init(c)
+	if err != nil {
+		return nil, err
+	}
+
 	reply, err := xinerama.QueryScreens(c).Reply()
 	if err != nil {
 		return nil, err
@@ -169,6 +173,9 @@ func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
 	defer c.Close()
 
 	err = xinerama.Init(c)
+	if err != nil {
+		return image.ZR
+	}
 
 	reply, err := xinerama.QueryScreens(c).Reply()
 	if err != nil {
