@@ -103,9 +103,20 @@ func GetDisplayBounds(displayIndex int) image.Rectangle {
 	ctx.Index = displayIndex
 	ctx.Count = 0
 	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(&ctx)))
+	dpi := "(Get-WmiObject -Class Win32_VideoController).VideoModeDescription"
+	out, err1 := exec.Command("powershell", dpi).Output()
+	dim := string(out)
+	l, err2 := strconv.Atoi(dim[0:strings.Index(dim,"x")-1])
+	dim = dim[strings.Index(dim,"x")+2: len(dim)-1]
+	h, err3 := strconv.Atoi(dim[0:strings.Index(dim,"x")-1])
+	if err1 != nil && err2 != nil && err3 != nil {
 	return image.Rect(
 		int(ctx.Rect.Left), int(ctx.Rect.Top),
 		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
+		}
+	return image.Rect(
+		int(ctx.Rect.Left), int(ctx.Rect.Top),
+		l, h)
 }
 
 func getDesktopWindow() win.HWND {
