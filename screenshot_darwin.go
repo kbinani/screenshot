@@ -207,7 +207,7 @@ func createColorspace() C.CGColorSpaceRef {
 func activeDisplayList() []C.CGDirectDisplayID {
 	count := C.uint32_t(NumActiveDisplays())
 	ret := make([]C.CGDirectDisplayID, count)
-	if C.CGGetActiveDisplayList(count, (*C.CGDirectDisplayID)(unsafe.Pointer(&ret[0])), nil) == C.kCGErrorSuccess {
+	if count > 0 && C.CGGetActiveDisplayList(count, (*C.CGDirectDisplayID)(unsafe.Pointer(&ret[0])), nil) == C.kCGErrorSuccess {
 		return ret
 	} else {
 		return make([]C.CGDirectDisplayID, 0)
