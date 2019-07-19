@@ -1,7 +1,6 @@
 package xwindow
 
 import (
-	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -19,7 +18,7 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 		err := recover()
 		if err != nil {
 			img = nil
-			e = errors.New(fmt.Sprintf("%v", err))
+			e = fmt.Errorf("%v", err)
 		}
 	}()
 	c, err := xgb.NewConn()
