@@ -1,4 +1,4 @@
-module github.com/Nv7-Github/screenshot
+module github.com/kbinani/screenshot
 
 go 1.16
 
