@@ -37,7 +37,7 @@ cp -R "$TRAVIS_BUILD_DIR" "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.." || exit 
 
 # install dependencies
 if [ "$GOOS" = "linux" -o "$GOOS" = "freebsd" -o "$GOOS" = "openbsd" -o "$GOOS" = "netbsd" -o "$GOOS" = "solaris" ]; then
-	go get github.com/BurntSushi/xgb || exit 12
+	go get github.com/jezek/xgb || exit 12
 	go get github.com/gen2brain/shm || exit 13
 elif [ "$GOOS" = "windows" ]; then
 	go get github.com/lxn/win || exit 14
