@@ -37,11 +37,12 @@ jobs:
       # uses: actions/cache@v2
       # with:
         # path: |
-          # ~/cache/go${{ env.GO_VERSION }}.${{ runner.os }}-${{ env.GOARCH }}.tar.gz
+          # ~/cache/go${{ env.GO_VERSION }}.${{ matrix.os }}-${{ env.GOARCH }}.tar.gz
 
     - name: Install deps
       env:
         GOOS: ${{ matrix.GOOS }}
+        RUNNER_OS: ${{ matrix.os }}
       run: ./.github/install-go.sh
 
     - name: Build
