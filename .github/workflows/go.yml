@@ -35,8 +35,8 @@ jobs:
 
     - name: Cache go installer
       uses: actions/cache@v2
-      key: ${{ env.GO_VERSION }}-${{ matrix.os }}-${{ env.GOARCH }}
       with:
+        key: ${{ env.GO_VERSION }}-${{ matrix.os }}-${{ env.GOARCH }}
         path: |
           ~/cache/go${{ env.GO_VERSION }}.${{ matrix.os }}-${{ env.GOARCH }}.tar.gz
 
