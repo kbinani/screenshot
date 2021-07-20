@@ -1,9 +1,9 @@
-name: Go
+name: CI
 on:
   push:
-    branches: [ gh-actions-migration ] #TODO: [ master ]
+    branches: [ master ]
   pull_request:
-    branches: [ gh-actions-migration ] #TODO: [ master ]
+    branches: [ master ]
 jobs:
   build:
     runs-on: ${{ matrix.os }}
