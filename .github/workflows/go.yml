@@ -15,8 +15,8 @@ jobs:
         include:
           - os: macos-latest
             GOOS: darwin
-          # - os: ubuntu-latest
-            # GOOS: windows
+          - os: ubuntu-latest
+            GOOS: windows
           - os: ubuntu-latest
             GOOS: linux
           # - os: ubuntu-latest
