@@ -6,10 +6,10 @@ export GOROOT_BOOTSTRAP="$HOME/gobootstrap$GO_VERSION"
 export GOPATH="$TEMP/gopath"
 export PATH="$GOROOT/bin:$PATH"
 
-env | grep -e ^GO -e ^PATH -e ^TRAVIS -e ^TEMP | sort
+env | grep -e ^GO -e ^PATH -e ^GITHUB -e ^TEMP | sort
 
-[ -n "$TRAVIS_BUILD_DIR" ] || exit 2
-[ -n "$TRAVIS_REPO_SLUG" ] || exit 3
+[ -n "$GITHUB_WORKSPACE" ] || exit 2
+[ -n "$GITHUB_REPOSITORY" ] || exit 3
 [ -n "$GOOS" ] || exit 4
 [ -n "$GOARCH" ] || exit 5
 
@@ -32,8 +32,8 @@ fi
 
 # copy workspace files to GOPATH
 rm -rf "$GOPATH"
-mkdir -p "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG" || exit 10
-cp -R "$TRAVIS_BUILD_DIR" "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG/.." || exit 11
+mkdir -p "$GOPATH/src/github.com/$GITHUB_REPOSITORY" || exit 10
+cp -R "$GITHUB_WORKSPACE" "$GOPATH/src/github.com/$GITHUB_REPOSITORY/.." || exit 11
 
 # install dependencies
 if [ "$GOOS" = "linux" -o "$GOOS" = "freebsd" -o "$GOOS" = "openbsd" -o "$GOOS" = "netbsd" -o "$GOOS" = "solaris" ]; then
@@ -45,7 +45,7 @@ fi
 
 # build example/main.go
 (
-	cd "$GOPATH/src/github.com/$TRAVIS_REPO_SLUG"
+	cd "$GOPATH/src/github.com/$GITHUB_REPOSITORY"
 	go build example/main.go || exit 1
 	echo "Built successfully"
 	ls -la
