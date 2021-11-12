@@ -23,27 +23,29 @@ func CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
 }
 
 //Encodes and Saves the image in PNG format 
-func SavePng(img *image.RGBA, imgName string) (error) {
-	file, err := os.Create(imgName+".png")
+func SavePng(img *image.RGBA, path string) (error) {
+	file, err := os.Create(path+".png")
 	if err != nil {
 		file.Close()
 		return err
 	}
 	png.Encode(file, img)
+        file.Close()
 	return nil
 }
 
 //Encodes and Saves the image in JPEG format
-func SaveJpeg(img *image.RGBA, imgName string, imgQuality int) (error) {
+func SaveJpeg(img *image.RGBA, path string, imgQuality int) (error) {
 	if imgQuality > 100 {
 		return errors.New("ImageQuality must be smaller than 100. But provided "+strconv.Itoa(imgQuality)+".Which is greater than 100");
 	}
 
-	file, err := os.Create(imgName+".jpg")
+	file, err := os.Create(path+".jpg")
 	if err != nil {
 		file.Close()
 		return err
 	}
 	jpeg.Encode(file, img, &jpeg.Options{imgQuality})
-	return nil	
+	file.Close()
+        return nil	
 }
