@@ -10,6 +10,7 @@ screenshot
 * Support Windows, Mac, Linux, FreeBSD, OpenBSD, NetBSD, and Solaris environment.
 * Multiple display supported.
 * `cgo` free for Windows, Linux, FreeBSD, OpenBSD, NetBSD, and Solaris.
+* requires `cgo` on Darwin (Mac/OSX) to work, but has a fallback emitting `ErrNoCGO` to ease integration.
 
 example
 =======
