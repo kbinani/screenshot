@@ -38,10 +38,5 @@ jobs:
         GOOS: ${{ matrix.GOOS }}
       run: go build ./example/main.go
 
-    - name: Run
-      env:
-        GOOS: ${{ matrix.GOOS }}
-      run: go run ./example/main.go
-
-    - name: Check
+    - name: Check files
       run: ls -la
