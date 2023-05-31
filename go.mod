@@ -8,4 +8,6 @@ require (
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 )
 
+replace github.com/kbinani/screenshot => ./
+
 require golang.org/x/sys v0.8.0 // indirect
