@@ -29,7 +29,7 @@ import (
 	"image"
 	"unsafe"
 
-	"github.com/AnomalRoil/screenshot/internal/util"
+	"github.com/kbinani/screenshot/internal/util"
 )
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {

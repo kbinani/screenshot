@@ -1,4 +1,4 @@
-module github.com/AnomalRoil/screenshot
+module github.com/kbinani/screenshot
 
 go 1.19
 

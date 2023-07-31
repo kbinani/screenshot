@@ -6,7 +6,7 @@ import (
 	"image/png"
 	"os"
 
-	"github.com/AnomalRoil/screenshot"
+	"github.com/kbinani/screenshot"
 )
 
 // save *image.RGBA to filePath with PNG format.
