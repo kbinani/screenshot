@@ -7,9 +7,6 @@ on:
 jobs:
   build:
     runs-on: ${{ matrix.os }}
-    env:
-      GO_VERSION: 1.20
-      GOARCH: amd64
     strategy:
       matrix:
         include:
@@ -26,16 +23,17 @@ jobs:
           - os: ubuntu-latest
             GOOS: netbsd
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
 
       - name: Set up Go
-        uses: actions/setup-go@v4.0.1
+        uses: actions/setup-go@v4
         with:
-          go-version: ${{ env.GO_VERSION }}
+          go-version: '1.20'
 
       - name: Build
         env:
           GOOS: ${{ matrix.GOOS }}
         run: |
+          go env
           go build ./example/main.go
           ls -la
