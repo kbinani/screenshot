@@ -7,11 +7,9 @@ screenshot
 [![Go Report Card](https://goreportcard.com/badge/github.com/kbinani/screenshot)](https://goreportcard.com/report/github.com/kbinani/screenshot)
 
 * Go library to capture desktop screen.
-* Support Windows, Mac, Linux, FreeBSD, OpenBSD, and NetBSD environment.
-* Solaris currently not supported because of dependencies issues (gen2brain/shm).
 * Multiple display supported.
-* `cgo` free for Windows, Linux, FreeBSD, OpenBSD, and NetBSD.
-* requires `cgo` on Darwin (Mac/OSX) to work, but has a fallback emitting `ErrNoCGO` to ease integration.
+* Supported GOOS: windows, darwin, linux, freebsd, openbsd, and netbsd.
+* `cgo` free except for GOOS=darwin.
 
 example
 =======
