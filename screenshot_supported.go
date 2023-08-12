@@ -1,3 +1,5 @@
+//go:build !darwin && !windows && (linux || freebsd || openbsd || netbsd)
+
 package screenshot
 
 import (

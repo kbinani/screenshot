@@ -16,7 +16,10 @@ func save(img *image.RGBA, filePath string) {
 		panic(err)
 	}
 	defer file.Close()
-	png.Encode(file, img)
+	err = png.Encode(file, img)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func main() {

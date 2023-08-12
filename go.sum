@@ -1,10 +1,9 @@
-github.com/gen2brain/shm v0.0.0-20200228170931-49f9650110c5 h1:Y5Q2mEwfzjMt5+3u70Gtw93ZOu2UuPeeeTBDntF7FoY=
-github.com/gen2brain/shm v0.0.0-20200228170931-49f9650110c5/go.mod h1:uF6rMu/1nvu+5DpiRLwusA6xB8zlkNoGzKn8lmYONUo=
-github.com/jezek/xgb v0.0.0-20210121224620-deaf085860bc h1:7D+Bh06CRPCJO3gr2F7h1sriovOZ8BMhca2Rg85c2nk=
-github.com/jezek/xgb v0.0.0-20210121224620-deaf085860bc/go.mod h1:IVnqGOEym/WlBOVXweHU+Q+/VP0lqqI8lqeDx9IjBqo=
-github.com/jezek/xgb v0.0.0-20210312150743-0e0f116e1240 h1:dy+DS31tGEGCsZzB45HmJJNHjur8GDgtRNX9U7HnSX4=
-github.com/jezek/xgb v0.0.0-20210312150743-0e0f116e1240/go.mod h1:3P4UH/k22rXyHIJD2w4h2XMqPX4Of/eySEZq9L6wqc4=
+github.com/gen2brain/shm v0.0.0-20221026125803-c33c9e32b1c8 h1:u4/UVF0sNxlqDwCptjIUTUkZW4UoZDrcHzvd2kNnF/k=
+github.com/gen2brain/shm v0.0.0-20221026125803-c33c9e32b1c8/go.mod h1:uF6rMu/1nvu+5DpiRLwusA6xB8zlkNoGzKn8lmYONUo=
+github.com/jezek/xgb v1.1.0 h1:wnpxJzP1+rkbGclEkmwpVFQWpuE2PUGNUzP8SbfFobk=
+github.com/jezek/xgb v1.1.0/go.mod h1:nrhwO0FX/enq75I7Y7G8iN1ubpSGZEiA3v9e9GyRFlk=
 github.com/lxn/win v0.0.0-20210218163916-a377121e959e h1:H+t6A/QJMbhCSEH5rAuRxh+CtW96g0Or0Fxa9IKr4uc=
 github.com/lxn/win v0.0.0-20210218163916-a377121e959e/go.mod h1:KxxjdtRkfNoYDCUP5ryK7XJJNTnpC8atvtmTheChOtk=
-golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13 h1:5jaG59Zhd+8ZXe8C+lgiAGqkOaZBruqrWclLkgAww34=
 golang.org/x/sys v0.0.0-20201018230417-eeed37f84f13/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.8.0 h1:EBmGv8NaZBZTWvrbjNoL6HVt+IVy3QDQpJs7VRIw3tU=
+golang.org/x/sys v0.8.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
