@@ -1,12 +1,12 @@
 // Package screenshot captures screen-shot image as image.RGBA.
-// Mac, Windows, Linux, FreeBSD, OpenBSD, NetBSD, and Solaris are supported.
+// Mac, Windows, Linux, FreeBSD, OpenBSD and NetBSD are supported.
 package screenshot
 
 import (
 	"image"
 )
 
-// CaptureDisplay captures whole region of displayIndex'th display.
+// CaptureDisplay captures whole region of displayIndex'th display, starts at 0 for primary display.
 func CaptureDisplay(displayIndex int) (*image.RGBA, error) {
 	rect := GetDisplayBounds(displayIndex)
 	return CaptureRect(rect)

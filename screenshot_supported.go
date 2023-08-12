@@ -1,3 +1,5 @@
+//go:build !darwin && !windows && (linux || freebsd || openbsd || netbsd)
+
 package screenshot
 
 import (
@@ -7,7 +9,7 @@ import (
 )
 
 // Capture returns screen capture of specified desktop region.
-// x and y represent distance from the upper-left corner of main display.
+// x and y represent distance from the upper-left corner of primary display.
 // Y-axis is downward direction. This means coordinates system is similar to Windows OS.
 func Capture(x, y, width, height int) (*image.RGBA, error) {
 	return xwindow.Capture(x, y, width, height)

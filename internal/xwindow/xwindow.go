@@ -5,12 +5,12 @@ import (
 	"image"
 	"image/color"
 
+	"github.com/kbinani/screenshot/internal/util"
 	"github.com/gen2brain/shm"
 	"github.com/jezek/xgb"
 	mshm "github.com/jezek/xgb/shm"
 	"github.com/jezek/xgb/xinerama"
 	"github.com/jezek/xgb/xproto"
-	"github.com/kbinani/screenshot/internal/util"
 )
 
 func Capture(x, y, width, height int) (img *image.RGBA, e error) {
@@ -92,8 +92,12 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 			mshm.Attach(c, seg, uint32(shmId), false)
 
 			defer mshm.Detach(c, seg)
-			defer shm.Rm(shmId)
-			defer shm.Dt(data)
+			defer func() {
+				_ = shm.Rm(shmId)
+			}()
+			defer func() {
+				_ = shm.Dt(data)
+			}()
 
 			_, err = mshm.GetImage(c, xproto.Drawable(screen.Root),
 				int16(intersect.Min.X), int16(intersect.Min.Y),
@@ -161,28 +165,28 @@ func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
 	defer func() {
 		e := recover()
 		if e != nil {
-			rect = image.ZR
+			rect = image.Rectangle{}
 		}
 	}()
 
 	c, err := xgb.NewConn()
 	if err != nil {
-		return image.ZR
+		return image.Rectangle{}
 	}
 	defer c.Close()
 
 	err = xinerama.Init(c)
 	if err != nil {
-		return image.ZR
+		return image.Rectangle{}
 	}
 
 	reply, err := xinerama.QueryScreens(c).Reply()
 	if err != nil {
-		return image.ZR
+		return image.Rectangle{}
 	}
 
 	if displayIndex >= int(reply.Number) {
-		return image.ZR
+		return image.Rectangle{}
 	}
 
 	primary := reply.ScreenInfo[0]
