@@ -1,13 +1,10 @@
-//go:build !(cgo && darwin) && !windows && !linux && !freebsd && !openbsd && !netbsd
+//go:build s390x || ppc64le || (!(cgo && darwin) && !windows && !linux && !freebsd && !openbsd && !netbsd)
 
 package screenshot
 
 import (
-	"errors"
 	"image"
 )
-
-var ErrUnsupported = errors.New("screenshot does not support your platform")
 
 // Capture returns screen capture of specified desktop region.
 // x and y represent distance from the upper-left corner of primary display.

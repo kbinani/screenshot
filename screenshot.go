@@ -3,8 +3,13 @@
 package screenshot
 
 import (
+	"errors"
 	"image"
 )
+
+// ErrUnsupported is returned when the platform or architecture used to compile the program
+// does not support screenshot, e.g. if you're compiling without CGO on Darwin
+var ErrUnsupported = errors.New("screenshot does not support your platform")
 
 // CaptureDisplay captures whole region of displayIndex'th display, starts at 0 for primary display.
 func CaptureDisplay(displayIndex int) (*image.RGBA, error) {

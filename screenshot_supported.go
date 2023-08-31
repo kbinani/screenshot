@@ -1,4 +1,4 @@
-//go:build !darwin && !windows && (linux || freebsd || openbsd || netbsd)
+//go:build !s390x && !ppc64le && !darwin && !windows && (linux || freebsd || openbsd || netbsd)
 
 package screenshot
 
