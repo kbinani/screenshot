@@ -3,10 +3,14 @@
 package screenshot
 
 /*
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
 #cgo CFLAGS: -x objective-c
 #cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation -framework ScreenCaptureKit
-#import <CoreGraphics/CoreGraphics.h>
-#import <ScreenCaptureKit/ScreenCaptureKit.h>
+#include <ScreenCaptureKit/ScreenCaptureKit.h>
+#else
+#cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation
+#endif
+#include <CoreGraphics/CoreGraphics.h>
 
 static void compatCGImageRelease(void* image) {
     CGImageRelease(image);
@@ -16,13 +20,14 @@ static void compatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
     CGContextDrawImage(c, rect, (CGImageRef)image);
 }
 
-extern void sendCaptureResult(CGImageRef img, uint64_t session, int error);
-
-static void startCapture(CGDirectDisplayID id, uint64_t session, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
+static void* capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block CGImageRef result = nil;
     [SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent* content, NSError* error) {
         @autoreleasepool {
             if (error) {
-                sendCaptureResult(nil, session, 1);
+                dispatch_semaphore_signal(semaphore);
                 return;
             }
             SCDisplay* target = nil;
@@ -33,7 +38,7 @@ static void startCapture(CGDirectDisplayID id, uint64_t session, CGRect diInters
                 }
             }
             if (!target) {
-                sendCaptureResult(nil, session, 2);
+                dispatch_semaphore_signal(semaphore);
                 return;
             }
             SCContentFilter* filter = [[SCContentFilter alloc] initWithDisplay:target excludingWindows:@[]];
@@ -44,15 +49,27 @@ static void startCapture(CGDirectDisplayID id, uint64_t session, CGRect diInters
             [SCScreenshotManager captureImageWithFilter:filter
                                           configuration:config
                                       completionHandler:^(CGImageRef img, NSError* error) {
-                if (error) {
-                    sendCaptureResult(nil, session, 3);
-                } else {
-                    CGImageRef copy = CGImageCreateCopyWithColorSpace(img, colorSpace);
-                    sendCaptureResult(copy, session, 0);
+                if (!error) {
+                    result = CGImageCreateCopyWithColorSpace(img, colorSpace);
                 }
+                dispatch_semaphore_signal(semaphore);
             }];
         }
     }];
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    return result;
+#else
+    CGImageRef img = CGDisplayCreateImageForRect(id, diIntersectDisplayLocal);
+    if (!img) {
+        return nil;
+    }
+    CGImageRef copy = CGImageCreateCopyWithColorSpace(img, colorSpace);
+    CGImageRelease(img);
+    if (!copy) {
+        return nil;
+    }
+    return copy;
+#endif
 }
 */
 import "C"
@@ -61,31 +78,9 @@ import (
 	"errors"
 	"image"
 	"unsafe"
-	"sync"
-	"sync/atomic"
 
 	"github.com/kbinani/screenshot/internal/util"
 )
-
-type captureResult struct {
-	img C.CGImageRef
-	error int
-}
-
-var gMut sync.Mutex
-var gChannels = make(map[uint64](chan captureResult))
-var gCounter uint64
-
-//export sendCaptureResult
-func sendCaptureResult(img C.CGImageRef, session C.uint64_t, error C.int) {
-	gMut.Lock()
-	channel, ok := gChannels[uint64(session)]
-	gMut.Unlock()
-	if ok {
-		result := captureResult{img: img, error: int(error)}
-		channel <- result
-	}
-}
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
 	if width <= 0 || height <= 0 {
@@ -121,12 +116,6 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	}
 	defer C.CGColorSpaceRelease(colorSpace)
 
-	session := atomic.AddUint64(&gCounter, 1)
-	ch := make(chan captureResult)
-	gMut.Lock()
-	gChannels[session] = ch
-	gMut.Unlock()
-
 	for _, id := range ids {
 		cgBounds := getCoreGraphicsCoordinateOfDisplay(id)
 		cgIntersect := C.CGRectIntersection(cgBounds, cgCaptureBounds)
@@ -149,10 +138,8 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
 			cgIntersect.size.width, cgIntersect.size.height)
 
-		C.startCapture(id, C.uint64_t(session), diIntersectDisplayLocal, colorSpace)
-		result := <- ch
-
-		image := unsafe.Pointer(result.img)
+		result := C.capture(id, diIntersectDisplayLocal, colorSpace)
+		image := unsafe.Pointer(result)
 		if image == nil {
 			return nil, errors.New("cannot capture display")
 		}
@@ -162,12 +149,6 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			cgIntersect.size.width, cgIntersect.size.height)
 		C.compatCGContextDrawImage(ctx, cgDrawRect, image)
 	}
-
-	gMut.Lock()
-	delete(gChannels, session)
-	gMut.Unlock()
-
-	close(ch)
 
 	i := 0
 	for iy := 0; iy < height; iy++ {
