@@ -3,23 +3,64 @@
 package screenshot
 
 /*
-#cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation
+#cgo CFLAGS: -x objective-c
+#cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation -framework ScreenCaptureKit
 #include <CoreGraphics/CoreGraphics.h>
+#import <ScreenCaptureKit/ScreenCaptureKit.h>
 
-void* CompatCGDisplayCreateImageForRect(CGDirectDisplayID display, CGRect rect) {
+static void* CompatCGDisplayCreateImageForRect(CGDirectDisplayID display, CGRect rect) {
 	return CGDisplayCreateImageForRect(display, rect);
 }
 
-void CompatCGImageRelease(void* image) {
+static void CompatCGImageRelease(void* image) {
 	CGImageRelease(image);
 }
 
-void* CompatCGImageCreateCopyWithColorSpace(void* image, CGColorSpaceRef space) {
+static void* CompatCGImageCreateCopyWithColorSpace(void* image, CGColorSpaceRef space) {
 	return CGImageCreateCopyWithColorSpace((CGImageRef)image, space);
 }
 
-void CompatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
+static void CompatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
 	CGContextDrawImage(c, rect, (CGImageRef)image);
+}
+
+extern void captureResult(CGImageRef img, int session);
+
+static void startCapture(CGDirectDisplayID id, int session) {
+	[SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent* content, NSError* error) {
+		@autoreleasepool {
+			if (error) {
+				printf("error1\n");
+				captureResult(nil, session);
+				return;
+			}
+			NSArray<SCDisplay *> *displays = [content displays];
+			SCDisplay* target = nil;
+			for (SCDisplay *display in displays) {
+				if ([display displayID] == id) {
+					target = display;
+					break;
+				}
+			}
+			if (!target) {
+				printf("error2\n");
+				captureResult(nil, session);
+				return;
+			}
+			SCContentFilter *filter = [[SCContentFilter alloc] initWithDisplay:target excludingWindows:@[]];
+			[SCScreenshotManager captureImageWithFilter:filter
+										  configuration:nil
+									  completionHandler:^(CGImageRef img, NSError* error) {
+				if (error) {
+					printf("error3\n");
+					captureResult(nil, session);
+				} else {
+					printf("captured\n");
+					captureResult(img, session);
+				}
+			}];
+		}
+	}];
 }
 */
 import "C"
@@ -28,9 +69,16 @@ import (
 	"errors"
 	"image"
 	"unsafe"
+	"fmt"
 
 	"github.com/kbinani/screenshot/internal/util"
 )
+
+//export captureResult
+func captureResult(img C.CGImageRef, session C.int) {
+	//TODO:
+	fmt.Printf("captureResult: session=%d\n", session)
+}
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
 	if width <= 0 || height <= 0 {
@@ -67,6 +115,7 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	defer C.CGColorSpaceRelease(colorSpace)
 
 	for _, id := range ids {
+		C.startCapture(id, 0); //TODO:
 		cgBounds := getCoreGraphicsCoordinateOfDisplay(id)
 		cgIntersect := C.CGRectIntersection(cgBounds, cgCaptureBounds)
 		if C.CGRectIsNull(cgIntersect) {
