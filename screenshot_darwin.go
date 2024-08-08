@@ -24,17 +24,16 @@ static void CompatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
 	CGContextDrawImage(c, rect, (CGImageRef)image);
 }
 
-extern void captureResult(CGImageRef img, int session);
+extern void sendCaptureResult(CGImageRef img, int session, int error);
 
 static void startCapture(CGDirectDisplayID id, int session) {
 	[SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent* content, NSError* error) {
 		@autoreleasepool {
 			if (error) {
-				printf("error1\n");
-				captureResult(nil, session);
+				sendCaptureResult(nil, session, 1);
 				return;
 			}
-			NSArray<SCDisplay *> *displays = [content displays];
+			NSArray<SCDisplay*>* displays = [content displays];
 			SCDisplay* target = nil;
 			for (SCDisplay *display in displays) {
 				if ([display displayID] == id) {
@@ -43,20 +42,18 @@ static void startCapture(CGDirectDisplayID id, int session) {
 				}
 			}
 			if (!target) {
-				printf("error2\n");
-				captureResult(nil, session);
+				sendCaptureResult(nil, session, 2);
 				return;
 			}
-			SCContentFilter *filter = [[SCContentFilter alloc] initWithDisplay:target excludingWindows:@[]];
+			SCContentFilter* filter = [[SCContentFilter alloc] initWithDisplay:target excludingWindows:@[]];
+			SCStreamConfiguration* config = [[SCStreamConfiguration alloc] init];
 			[SCScreenshotManager captureImageWithFilter:filter
-										  configuration:nil
+										  configuration:config
 									  completionHandler:^(CGImageRef img, NSError* error) {
 				if (error) {
-					printf("error3\n");
-					captureResult(nil, session);
+					sendCaptureResult(nil, session, 3);
 				} else {
-					printf("captured\n");
-					captureResult(img, session);
+					sendCaptureResult(img, session, 0);
 				}
 			}];
 		}
@@ -74,10 +71,18 @@ import (
 	"github.com/kbinani/screenshot/internal/util"
 )
 
-//export captureResult
-func captureResult(img C.CGImageRef, session C.int) {
-	//TODO:
-	fmt.Printf("captureResult: session=%d\n", session)
+type captureResult struct {
+	img unsafe.Pointer
+	error int
+}
+
+
+var channel = make(chan captureResult)
+
+//export sendCaptureResult
+func sendCaptureResult(img C.CGImageRef, session C.int, error C.int) {
+	result := captureResult{img: unsafe.Pointer(img), error: int(error)}
+	channel <- result
 }
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
@@ -116,6 +121,8 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 
 	for _, id := range ids {
 		C.startCapture(id, 0); //TODO:
+		result := <- channel
+		fmt.Printf("error=%d\n", result.error)
 		cgBounds := getCoreGraphicsCoordinateOfDisplay(id)
 		cgIntersect := C.CGRectIntersection(cgBounds, cgCaptureBounds)
 		if C.CGRectIsNull(cgIntersect) {
@@ -125,18 +132,19 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			continue
 		}
 
-		// CGDisplayCreateImageForRect potentially fail in case width/height is odd number.
-		if int(cgIntersect.size.width)%2 != 0 {
-			cgIntersect.size.width = C.CGFloat(int(cgIntersect.size.width) + 1)
-		}
-		if int(cgIntersect.size.height)%2 != 0 {
-			cgIntersect.size.height = C.CGFloat(int(cgIntersect.size.height) + 1)
-		}
+		// // CGDisplayCreateImageForRect potentially fail in case width/height is odd number.
+		// if int(cgIntersect.size.width)%2 != 0 {
+		// 	cgIntersect.size.width = C.CGFloat(int(cgIntersect.size.width) + 1)
+		// }
+		// if int(cgIntersect.size.height)%2 != 0 {
+		// 	cgIntersect.size.height = C.CGFloat(int(cgIntersect.size.height) + 1)
+		// }
 
-		diIntersectDisplayLocal := C.CGRectMake(cgIntersect.origin.x-cgBounds.origin.x,
-			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
-			cgIntersect.size.width, cgIntersect.size.height)
-		captured := C.CompatCGDisplayCreateImageForRect(id, diIntersectDisplayLocal)
+		// diIntersectDisplayLocal := C.CGRectMake(cgIntersect.origin.x-cgBounds.origin.x,
+		// 	cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
+		// 	cgIntersect.size.width, cgIntersect.size.height)
+		// captured := C.CompatCGDisplayCreateImageForRect(id, diIntersectDisplayLocal)
+		captured := result.img
 		if captured == nil {
 			return nil, errors.New("cannot capture display")
 		}
