@@ -8,35 +8,27 @@ package screenshot
 #include <CoreGraphics/CoreGraphics.h>
 #import <ScreenCaptureKit/ScreenCaptureKit.h>
 
-static void* CompatCGDisplayCreateImageForRect(CGDirectDisplayID display, CGRect rect) {
-	return CGDisplayCreateImageForRect(display, rect);
-}
-
 static void CompatCGImageRelease(void* image) {
 	CGImageRelease(image);
-}
-
-static void* CompatCGImageCreateCopyWithColorSpace(void* image, CGColorSpaceRef space) {
-	return CGImageCreateCopyWithColorSpace((CGImageRef)image, space);
 }
 
 static void CompatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
 	CGContextDrawImage(c, rect, (CGImageRef)image);
 }
 
-extern void sendCaptureResult(CGImageRef img, int session, int error);
+extern void sendCaptureResult(CGImageRef img, uint64_t session, int error);
 
-static void startCapture(CGDirectDisplayID id, int session) {
+static void startCapture(CGDirectDisplayID id, uint64_t session, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
 	[SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent* content, NSError* error) {
 		@autoreleasepool {
 			if (error) {
 				sendCaptureResult(nil, session, 1);
 				return;
 			}
-			NSArray<SCDisplay*>* displays = [content displays];
+			NSArray<SCDisplay*>* displays = content.displays;
 			SCDisplay* target = nil;
 			for (SCDisplay *display in displays) {
-				if ([display displayID] == id) {
+				if (display.displayID == id) {
 					target = display;
 					break;
 				}
@@ -47,13 +39,17 @@ static void startCapture(CGDirectDisplayID id, int session) {
 			}
 			SCContentFilter* filter = [[SCContentFilter alloc] initWithDisplay:target excludingWindows:@[]];
 			SCStreamConfiguration* config = [[SCStreamConfiguration alloc] init];
+			config.sourceRect = diIntersectDisplayLocal;
+			config.width = diIntersectDisplayLocal.size.width;
+			config.height = diIntersectDisplayLocal.size.height;
 			[SCScreenshotManager captureImageWithFilter:filter
 										  configuration:config
 									  completionHandler:^(CGImageRef img, NSError* error) {
 				if (error) {
 					sendCaptureResult(nil, session, 3);
 				} else {
-					sendCaptureResult(img, session, 0);
+					CGImageRef copy = CGImageCreateCopyWithColorSpace(img, colorSpace);
+					sendCaptureResult(copy, session, 0);
 				}
 			}];
 		}
@@ -66,23 +62,31 @@ import (
 	"errors"
 	"image"
 	"unsafe"
-	"fmt"
+	"sync"
+	"sync/atomic"
 
 	"github.com/kbinani/screenshot/internal/util"
 )
 
 type captureResult struct {
-	img unsafe.Pointer
+	img C.CGImageRef
 	error int
 }
 
 
-var channel = make(chan captureResult)
+var gMut sync.Mutex
+var gChannels = make(map[uint64](chan captureResult))
+var gCounter uint64
 
 //export sendCaptureResult
-func sendCaptureResult(img C.CGImageRef, session C.int, error C.int) {
-	result := captureResult{img: unsafe.Pointer(img), error: int(error)}
-	channel <- result
+func sendCaptureResult(img C.CGImageRef, session C.uint64_t, error C.int) {
+	gMut.Lock()
+	channel, ok := gChannels[uint64(session)]
+	gMut.Unlock()
+	if ok {
+		result := captureResult{img: img, error: int(error)}
+		channel <- result
+	}
 }
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
@@ -120,9 +124,6 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	defer C.CGColorSpaceRelease(colorSpace)
 
 	for _, id := range ids {
-		C.startCapture(id, 0); //TODO:
-		result := <- channel
-		fmt.Printf("error=%d\n", result.error)
 		cgBounds := getCoreGraphicsCoordinateOfDisplay(id)
 		cgIntersect := C.CGRectIntersection(cgBounds, cgCaptureBounds)
 		if C.CGRectIsNull(cgIntersect) {
@@ -132,27 +133,37 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			continue
 		}
 
-		// // CGDisplayCreateImageForRect potentially fail in case width/height is odd number.
-		// if int(cgIntersect.size.width)%2 != 0 {
-		// 	cgIntersect.size.width = C.CGFloat(int(cgIntersect.size.width) + 1)
-		// }
-		// if int(cgIntersect.size.height)%2 != 0 {
-		// 	cgIntersect.size.height = C.CGFloat(int(cgIntersect.size.height) + 1)
-		// }
-
-		// diIntersectDisplayLocal := C.CGRectMake(cgIntersect.origin.x-cgBounds.origin.x,
-		// 	cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
-		// 	cgIntersect.size.width, cgIntersect.size.height)
-		// captured := C.CompatCGDisplayCreateImageForRect(id, diIntersectDisplayLocal)
-		captured := result.img
-		if captured == nil {
-			return nil, errors.New("cannot capture display")
+		// CGDisplayCreateImageForRect potentially fail in case width/height is odd number.
+		if int(cgIntersect.size.width)%2 != 0 {
+			cgIntersect.size.width = C.CGFloat(int(cgIntersect.size.width) + 1)
 		}
-		defer C.CompatCGImageRelease(captured)
+		if int(cgIntersect.size.height)%2 != 0 {
+			cgIntersect.size.height = C.CGFloat(int(cgIntersect.size.height) + 1)
+		}
 
-		image := C.CompatCGImageCreateCopyWithColorSpace(captured, colorSpace)
+		diIntersectDisplayLocal := C.CGRectMake(cgIntersect.origin.x-cgBounds.origin.x,
+			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
+			cgIntersect.size.width, cgIntersect.size.height)
+
+		session := atomic.AddUint64(&gCounter, 1)
+		ch := make(chan captureResult)
+
+		gMut.Lock()
+		gChannels[session] = ch
+		gMut.Unlock()
+
+		C.startCapture(id, C.uint64_t(session), diIntersectDisplayLocal, colorSpace)
+		result := <- ch
+
+		gMut.Lock()
+		delete(gChannels, session)
+		gMut.Unlock()
+
+		close(ch)
+
+		image := unsafe.Pointer(result.img)
 		if image == nil {
-			return nil, errors.New("failed copying captured image")
+			return nil, errors.New("cannot capture display")
 		}
 		defer C.CompatCGImageRelease(image)
 
