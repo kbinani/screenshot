@@ -123,6 +123,12 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	}
 	defer C.CGColorSpaceRelease(colorSpace)
 
+	session := atomic.AddUint64(&gCounter, 1)
+	ch := make(chan captureResult)
+	gMut.Lock()
+	gChannels[session] = ch
+	gMut.Unlock()
+
 	for _, id := range ids {
 		cgBounds := getCoreGraphicsCoordinateOfDisplay(id)
 		cgIntersect := C.CGRectIntersection(cgBounds, cgCaptureBounds)
@@ -145,21 +151,9 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
 			cgIntersect.size.width, cgIntersect.size.height)
 
-		session := atomic.AddUint64(&gCounter, 1)
-		ch := make(chan captureResult)
-
-		gMut.Lock()
-		gChannels[session] = ch
-		gMut.Unlock()
 
 		C.startCapture(id, C.uint64_t(session), diIntersectDisplayLocal, colorSpace)
 		result := <- ch
-
-		gMut.Lock()
-		delete(gChannels, session)
-		gMut.Unlock()
-
-		close(ch)
 
 		image := unsafe.Pointer(result.img)
 		if image == nil {
@@ -171,6 +165,12 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			cgIntersect.size.width, cgIntersect.size.height)
 		C.CompatCGContextDrawImage(ctx, cgDrawRect, image)
 	}
+
+	gMut.Lock()
+	delete(gChannels, session)
+	gMut.Unlock()
+
+	close(ch)
 
 	i := 0
 	for iy := 0; iy < height; iy++ {
