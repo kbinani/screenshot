@@ -3,23 +3,65 @@
 package screenshot
 
 /*
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
+#cgo CFLAGS: -x objective-c
+#cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation -framework ScreenCaptureKit
+#include <ScreenCaptureKit/ScreenCaptureKit.h>
+#else
 #cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation
+#endif
 #include <CoreGraphics/CoreGraphics.h>
 
-void* CompatCGDisplayCreateImageForRect(CGDirectDisplayID display, CGRect rect) {
-	return CGDisplayCreateImageForRect(display, rect);
-}
-
-void CompatCGImageRelease(void* image) {
-	CGImageRelease(image);
-}
-
-void* CompatCGImageCreateCopyWithColorSpace(void* image, CGColorSpaceRef space) {
-	return CGImageCreateCopyWithColorSpace((CGImageRef)image, space);
-}
-
-void CompatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
-	CGContextDrawImage(c, rect, (CGImageRef)image);
+static CGImageRef capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
+    dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
+    __block CGImageRef result = nil;
+    [SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent* content, NSError* error) {
+        @autoreleasepool {
+            if (error) {
+                dispatch_semaphore_signal(semaphore);
+                return;
+            }
+            SCDisplay* target = nil;
+            for (SCDisplay *display in content.displays) {
+                if (display.displayID == id) {
+                    target = display;
+                    break;
+                }
+            }
+            if (!target) {
+                dispatch_semaphore_signal(semaphore);
+                return;
+            }
+            SCContentFilter* filter = [[SCContentFilter alloc] initWithDisplay:target excludingWindows:@[]];
+            SCStreamConfiguration* config = [[SCStreamConfiguration alloc] init];
+            config.sourceRect = diIntersectDisplayLocal;
+            config.width = diIntersectDisplayLocal.size.width;
+            config.height = diIntersectDisplayLocal.size.height;
+            [SCScreenshotManager captureImageWithFilter:filter
+                                          configuration:config
+                                      completionHandler:^(CGImageRef img, NSError* error) {
+                if (!error) {
+                    result = CGImageCreateCopyWithColorSpace(img, colorSpace);
+                }
+                dispatch_semaphore_signal(semaphore);
+            }];
+        }
+    }];
+    dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    return result;
+#else
+    CGImageRef img = CGDisplayCreateImageForRect(id, diIntersectDisplayLocal);
+    if (!img) {
+        return nil;
+    }
+    CGImageRef copy = CGImageCreateCopyWithColorSpace(img, colorSpace);
+    CGImageRelease(img);
+    if (!copy) {
+        return nil;
+    }
+    return copy;
+#endif
 }
 */
 import "C"
@@ -87,21 +129,16 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 		diIntersectDisplayLocal := C.CGRectMake(cgIntersect.origin.x-cgBounds.origin.x,
 			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
 			cgIntersect.size.width, cgIntersect.size.height)
-		captured := C.CompatCGDisplayCreateImageForRect(id, diIntersectDisplayLocal)
-		if captured == nil {
+
+		image := C.capture(id, diIntersectDisplayLocal, colorSpace)
+		if unsafe.Pointer(image) == nil {
 			return nil, errors.New("cannot capture display")
 		}
-		defer C.CompatCGImageRelease(captured)
-
-		image := C.CompatCGImageCreateCopyWithColorSpace(captured, colorSpace)
-		if image == nil {
-			return nil, errors.New("failed copying captured image")
-		}
-		defer C.CompatCGImageRelease(image)
+		defer C.CGImageRelease(image)
 
 		cgDrawRect := C.CGRectMake(cgIntersect.origin.x-cgCaptureBounds.origin.x, cgIntersect.origin.y-cgCaptureBounds.origin.y,
 			cgIntersect.size.width, cgIntersect.size.height)
-		C.CompatCGContextDrawImage(ctx, cgDrawRect, image)
+		C.CGContextDrawImage(ctx, cgDrawRect, image)
 	}
 
 	i := 0
