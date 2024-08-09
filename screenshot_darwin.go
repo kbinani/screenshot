@@ -49,6 +49,7 @@ static CGImageRef capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, 
         }
     }];
     dispatch_semaphore_wait(semaphore, DISPATCH_TIME_FOREVER);
+    dispatch_release(semaphore);
     return result;
 #else
     CGImageRef img = CGDisplayCreateImageForRect(id, diIntersectDisplayLocal);
