@@ -12,15 +12,7 @@ package screenshot
 #endif
 #include <CoreGraphics/CoreGraphics.h>
 
-static void compatCGImageRelease(void* image) {
-    CGImageRelease(image);
-}
-
-static void compatCGContextDrawImage(CGContextRef c, CGRect rect, void* image) {
-    CGContextDrawImage(c, rect, (CGImageRef)image);
-}
-
-static void* capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
+static CGImageRef capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
 #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block CGImageRef result = nil;
@@ -138,16 +130,15 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			cgBounds.origin.y+cgBounds.size.height-(cgIntersect.origin.y+cgIntersect.size.height),
 			cgIntersect.size.width, cgIntersect.size.height)
 
-		result := C.capture(id, diIntersectDisplayLocal, colorSpace)
-		image := unsafe.Pointer(result)
-		if image == nil {
+		image := C.capture(id, diIntersectDisplayLocal, colorSpace)
+		if unsafe.Pointer(image) == nil {
 			return nil, errors.New("cannot capture display")
 		}
-		defer C.compatCGImageRelease(image)
+		defer C.CGImageRelease(image)
 
 		cgDrawRect := C.CGRectMake(cgIntersect.origin.x-cgCaptureBounds.origin.x, cgIntersect.origin.y-cgCaptureBounds.origin.y,
 			cgIntersect.size.width, cgIntersect.size.height)
-		C.compatCGContextDrawImage(ctx, cgDrawRect, image)
+		C.CGContextDrawImage(ctx, cgDrawRect, image)
 	}
 
 	i := 0
