@@ -15,6 +15,10 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Fetch all tags from remote
+        run: |
+          git fetch --tags
+
       - name: Get latest version from tags and releases
         id: get_latest_version
         run: |
