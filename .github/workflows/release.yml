@@ -1,0 +1,52 @@
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get latest release version from GitHub
+        id: get_latest_release
+        run: |
+          latest_release=$(gh release view --json tagName -q .tagName || echo "v0.0.0")
+          echo "Latest release: $latest_release"
+          echo "LATEST_RELEASE=$latest_release" >> $GITHUB_ENV
+
+      - name: Calculate next version
+        id: calc_version
+        run: |
+          version=${{ env.LATEST_RELEASE }}
+          IFS='.' read -r base major minor <<< "${version//v/}"
+
+          # Increment minor version
+          minor=$((minor + 1))
+
+          # Check if minor exceeds 999
+          if ((minor > 999)); then
+              minor=0
+              major=$((major + 1))
+          fi
+
+          # Check if major exceeds 999
+          if ((major > 999)); then
+              major=0
+              base=$((base + 1))
+          fi
+
+          next_version="v${base}.${major}.${minor}"
+          echo "Next version: $next_version"
+          echo "NEXT_VERSION=$next_version" >> $GITHUB_ENV
+
+      - name: Create new tag and release using gh
+        run: |
+          gh release create ${{ env.NEXT_VERSION }} --notes "Release ${{ env.NEXT_VERSION }}"
