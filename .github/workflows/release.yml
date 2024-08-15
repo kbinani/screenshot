@@ -49,6 +49,8 @@ jobs:
 
       - name: Create new tag
         run: |
+          git config --global user.email "actions@github.com"
+          git config --global user.name "GitHub Actions"
           git tag ${{ env.NEXT_VERSION }} -m "Tag for release ${{ env.NEXT_VERSION }}"
           git push origin ${{ env.NEXT_VERSION }}
 
