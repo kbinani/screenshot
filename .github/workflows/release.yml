@@ -15,12 +15,28 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Get latest release version from GitHub
-        id: get_latest_release
+      - name: Get latest version from tags and releases
+        id: get_latest_version
         run: |
+          # late latest tag name
+          latest_tag=$(git tag | sort -V | tail -n1)
+          if [ -z "$latest_tag" ]; then
+            latest_tag="v0.0.0"
+          fi
+          echo "Latest tag: $latest_tag"
+
+          # get latest GitHub Release version
           latest_release=$(gh release view --json tagName -q .tagName || echo "v0.0.0")
           echo "Latest release: $latest_release"
-          echo "LATEST_RELEASE=$latest_release" >> $GITHUB_ENV
+
+          if [ "$(printf '%s\n' "$latest_tag" "$latest_release" | sort -V | tail -n1)" = "$latest_tag" ]; then
+            final_version=$latest_tag
+          else
+            final_version=$latest_release
+          fi
+
+          echo "Final version: $final_version"
+          echo "LATEST_RELEASE=$final_version" >> $GITHUB_ENV
 
       - name: Calculate next version
         id: calc_version
