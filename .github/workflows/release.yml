@@ -65,4 +65,6 @@ jobs:
 
       - name: Create new tag and release using gh
         run: |
+          echo "Waiting for 10 seconds before creating the release..."
+          sleep 10
           gh release create ${{ env.NEXT_VERSION }} --notes "Release ${{ env.NEXT_VERSION }}"
