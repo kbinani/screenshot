@@ -47,6 +47,22 @@ jobs:
           echo "Next version: $next_version"
           echo "NEXT_VERSION=$next_version" >> $GITHUB_ENV
 
+      - name: Create new tag
+        run: |
+          gh tag create ${{ env.NEXT_VERSION }} -m "Tag for release ${{ env.NEXT_VERSION }}"
+          gh tag push origin ${{ env.NEXT_VERSION }}
+
+      - name: Update latest tag
+        run: |
+          if gh tag list | grep -q "^latest$"; then
+              gh tag delete latest
+              gh tag create latest -m "Update latest tag to ${{ env.NEXT_VERSION }}"
+              gh tag push origin latest
+          else
+              gh tag create latest -m "Create latest tag pointing to ${{ env.NEXT_VERSION }}"
+              gh tag push origin latest
+          fi
+
       - name: Create new tag and release using gh
         run: |
           gh release create ${{ env.NEXT_VERSION }} --notes "Release ${{ env.NEXT_VERSION }}"
