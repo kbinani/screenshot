@@ -11,6 +11,9 @@ screenshot
 * Supported GOOS: windows, darwin, linux, freebsd, openbsd, and netbsd.
 * `cgo` free except for GOOS=darwin.
 
+use
+```go get -u github.com/kbinani/screenshot@latest```
+
 example
 =======
 
