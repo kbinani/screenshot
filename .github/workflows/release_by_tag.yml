@@ -1,0 +1,33 @@
+name: ReleaseByTag
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  Release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get latest tag
+        run: |
+          echo "LATEST_TAG=$(git tag | grep -v '^latest$' | sort -V | tail -n1)" >> ${GITHUB_ENV}
+
+      - name: Bump version and push tag
+        id: tag-version
+        uses: mathieudutour/github-tag-action@v6.2
+        with:
+          tag_prefix: ""
+          custom_tag: ${{ env.LATEST_TAG }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Step GitHub release
+        id: stepCreateRelease
+        uses: ncipollo/release-action@v1
+        with:
+          skipIfReleaseExists: 'true'
+          tag: ${{ env.LATEST_TAG }}
+          name: ${{ env.LATEST_TAG }}
