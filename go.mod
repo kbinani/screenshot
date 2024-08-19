@@ -9,6 +9,6 @@ require (
 )
 
 require (
-	github.com/godbus/dbus v4.1.0+incompatible // indirect
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	golang.org/x/sys v0.11.0 // indirect
 )
