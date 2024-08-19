@@ -5,15 +5,49 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/kbinani/screenshot/internal/util"
 	"github.com/gen2brain/shm"
+	"github.com/godbus/dbus"
 	"github.com/jezek/xgb"
 	mshm "github.com/jezek/xgb/shm"
 	"github.com/jezek/xgb/xinerama"
 	"github.com/jezek/xgb/xproto"
+	"github.com/kbinani/screenshot/internal/util"
 )
 
 func Capture(x, y, width, height int) (img *image.RGBA, e error) {
+	c, err := dbus.SessionBus()
+	if err != nil {
+		return nil, fmt.Errorf("dbus.SessionBus() failed: %v", err)
+	}
+	defer c.Close()
+	options := map[string]dbus.Variant{
+		"modal":        dbus.MakeVariant(false),
+		"interactive":  dbus.MakeVariant(false),
+		"handle_token": dbus.MakeVariant(1),
+	}
+	obj := c.Object("org.freedesktop.portal.Desktop", dbus.ObjectPath("/org/freedesktop/portal/desktop"))
+	handle0 := obj.Call("org.freedesktop.portal.Screenshot.Screenshot", 0, "", options)
+	var res0 dbus.ObjectPath
+	err = handle0.Store(&res0)
+	ch := make(chan *dbus.Message)
+	c.Eavesdrop(ch)
+	msg := <-ch
+	for _, body := range msg.Body {
+		v, ok := body.(map[string]dbus.Variant)
+		if !ok {
+			continue
+		}
+		uri, ok := v["uri"]
+		if !ok {
+			continue
+		}
+		fmt.Printf("uri=%s\n", uri)
+		break
+	}
+	return nil, fmt.Errorf("wa")
+}
+
+func Capture_(x, y, width, height int) (img *image.RGBA, e error) {
 	defer func() {
 		err := recover()
 		if err != nil {
