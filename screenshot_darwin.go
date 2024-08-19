@@ -72,7 +72,7 @@ import (
 	"image"
 	"unsafe"
 
-	"github.com/kbinani/screenshot/internal/util"
+	"github.com/kbinani/screenshot/internal"
 )
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
@@ -81,7 +81,7 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	}
 
 	rect := image.Rect(0, 0, width, height)
-	img, err := util.CreateImage(rect)
+	img, err := internal.CreateImage(rect)
 	if err != nil {
 		return nil, err
 	}

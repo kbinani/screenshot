@@ -1,114 +1,19 @@
-package xwindow
+//go:build !s390x && !ppc64le && !darwin && !windows && (linux || freebsd || openbsd || netbsd)
+
+package internal
 
 import (
 	"fmt"
 	"github.com/gen2brain/shm"
-	"github.com/godbus/dbus/v5"
 	"github.com/jezek/xgb"
 	mshm "github.com/jezek/xgb/shm"
 	"github.com/jezek/xgb/xinerama"
 	"github.com/jezek/xgb/xproto"
-	"github.com/kbinani/screenshot/internal/util"
 	"image"
 	"image/color"
-	"image/draw"
-	"image/png"
-	"net/url"
-	"os"
-	"sync/atomic"
 )
 
 var gCounter uint64 = 0
-
-func Capture(x, y, width, height int) (img *image.RGBA, e error) {
-	sessionType := os.Getenv("XDG_SESSION_TYPE")
-	if sessionType == "wayland" {
-		return captureDbus(x, y, width, height)
-	} else {
-		return captureXinerama(x, y, width, height)
-	}
-}
-
-func captureDbus(x, y, width, height int) (img *image.RGBA, e error) {
-	c, err := dbus.ConnectSessionBus()
-	if err != nil {
-		return nil, fmt.Errorf("dbus.SessionBus() failed: %v", err)
-	}
-	defer func(c *dbus.Conn) {
-		err := c.Close()
-		if err != nil {
-			e = err
-		}
-	}(c)
-	token := atomic.AddUint64(&gCounter, 1)
-	options := map[string]dbus.Variant{
-		"modal":        dbus.MakeVariant(false),
-		"interactive":  dbus.MakeVariant(false),
-		"handle_token": dbus.MakeVariant(token),
-	}
-	obj := c.Object("org.freedesktop.portal.Desktop", dbus.ObjectPath("/org/freedesktop/portal/desktop"))
-	call := obj.Call("org.freedesktop.portal.Screenshot.Screenshot", 0, "", options)
-	var path dbus.ObjectPath
-	err = call.Store(&path)
-	if err != nil {
-		return nil, fmt.Errorf("dbus.Store() failed: %v", err)
-	}
-	ch := make(chan *dbus.Message)
-	c.Eavesdrop(ch)
-	for msg := range ch {
-		o, ok := msg.Headers[dbus.FieldPath]
-		if !ok {
-			continue
-		}
-		s, ok := o.Value().(dbus.ObjectPath)
-		if !ok {
-			return nil, fmt.Errorf("dbus.FieldPath value does't have ObjectPath type")
-		}
-		if s != path {
-			continue
-		}
-		for _, body := range msg.Body {
-			v, ok := body.(map[string]dbus.Variant)
-			if !ok {
-				continue
-			}
-			uri, ok := v["uri"]
-			if !ok {
-				continue
-			}
-			path, ok := uri.Value().(string)
-			if !ok {
-				return nil, fmt.Errorf("uri is not a string")
-			}
-			fpath, err := url.Parse(path)
-			if err != nil {
-				return nil, fmt.Errorf("url.Parse(%v) failed: %v", path, err)
-			}
-			if fpath.Scheme != "file" {
-				return nil, fmt.Errorf("uri is not a file path")
-			}
-			file, err := os.Open(fpath.Path)
-			if err != nil {
-				return nil, fmt.Errorf("os.Open(%s) failed: %v", path, err)
-			}
-			defer func(file *os.File) {
-				_ = file.Close()
-				_ = os.Remove(fpath.Path)
-			}(file)
-			img, err := png.Decode(file)
-			if err != nil {
-				return nil, fmt.Errorf("png.Decode(%s) failed: %v", path, err)
-			}
-			canvas, err := util.CreateImage(image.Rect(0, 0, width, height))
-			if err != nil {
-				return nil, fmt.Errorf("util.CreateImage(%v) failed: %v", path, err)
-			}
-			draw.Draw(canvas, image.Rect(0, 0, width, height), img, image.Point{x, y}, draw.Src)
-			return canvas, e
-		}
-	}
-	return nil, fmt.Errorf("dbus.Message doesn't contain uri")
-}
 
 func captureXinerama(x, y, width, height int) (img *image.RGBA, e error) {
 	defer func() {
@@ -150,7 +55,7 @@ func captureXinerama(x, y, width, height int) (img *image.RGBA, e error) {
 	intersect := wholeScreenBounds.Intersect(targetBounds)
 
 	rect := image.Rect(0, 0, width, height)
-	img, err = util.CreateImage(rect)
+	img, err = CreateImage(rect)
 	if err != nil {
 		return nil, err
 	}
