@@ -21,6 +21,15 @@ import (
 var gCounter uint64 = 0
 
 func Capture(x, y, width, height int) (img *image.RGBA, e error) {
+	sessionType := os.Getenv("XDG_SESSION_TYPE")
+	if sessionType == "wayland" {
+		return captureDbus(x, y, width, height)
+	} else {
+		return captureXinerama(x, y, width, height)
+	}
+}
+
+func captureDbus(x, y, width, height int) (img *image.RGBA, e error) {
 	c, err := dbus.ConnectSessionBus()
 	if err != nil {
 		return nil, fmt.Errorf("dbus.SessionBus() failed: %v", err)
@@ -91,6 +100,9 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 				return nil, fmt.Errorf("png.Decode(%s) failed: %v", path, err)
 			}
 			canvas, err := util.CreateImage(image.Rect(0, 0, width, height))
+			if err != nil {
+				return nil, fmt.Errorf("util.CreateImage(%v) failed: %v", path, err)
+			}
 			draw.Draw(canvas, image.Rect(0, 0, width, height), img, image.Point{x, y}, draw.Src)
 			return canvas, e
 		}
@@ -98,7 +110,7 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 	return nil, fmt.Errorf("dbus.Message doesn't contain uri")
 }
 
-func Capture_(x, y, width, height int) (img *image.RGBA, e error) {
+func captureXinerama(x, y, width, height int) (img *image.RGBA, e error) {
 	defer func() {
 		err := recover()
 		if err != nil {
