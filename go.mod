@@ -8,4 +8,7 @@ require (
 	github.com/lxn/win v0.0.0-20210218163916-a377121e959e
 )
 
-require golang.org/x/sys v0.11.0 // indirect
+require (
+	github.com/godbus/dbus/v5 v5.1.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+)

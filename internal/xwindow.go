@@ -1,19 +1,19 @@
-package xwindow
+//go:build !s390x && !ppc64le && !darwin && !windows && (linux || freebsd || openbsd || netbsd)
+
+package internal
 
 import (
 	"fmt"
-	"image"
-	"image/color"
-
-	"github.com/kbinani/screenshot/internal/util"
 	"github.com/gen2brain/shm"
 	"github.com/jezek/xgb"
 	mshm "github.com/jezek/xgb/shm"
 	"github.com/jezek/xgb/xinerama"
 	"github.com/jezek/xgb/xproto"
+	"image"
+	"image/color"
 )
 
-func Capture(x, y, width, height int) (img *image.RGBA, e error) {
+func captureXinerama(x, y, width, height int) (img *image.RGBA, e error) {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -53,7 +53,7 @@ func Capture(x, y, width, height int) (img *image.RGBA, e error) {
 	intersect := wholeScreenBounds.Intersect(targetBounds)
 
 	rect := image.Rect(0, 0, width, height)
-	img, err = util.CreateImage(rect)
+	img, err = CreateImage(rect)
 	if err != nil {
 		return nil, err
 	}
