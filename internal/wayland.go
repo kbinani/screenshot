@@ -13,6 +13,8 @@ import (
 	"sync/atomic"
 )
 
+var gCounter uint64 = 0
+
 func captureDbus(x, y, width, height int) (img *image.RGBA, e error) {
 	c, err := dbus.ConnectSessionBus()
 	if err != nil {

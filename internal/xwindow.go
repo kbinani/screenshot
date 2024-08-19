@@ -13,8 +13,6 @@ import (
 	"image/color"
 )
 
-var gCounter uint64 = 0
-
 func captureXinerama(x, y, width, height int) (img *image.RGBA, e error) {
 	defer func() {
 		err := recover()
