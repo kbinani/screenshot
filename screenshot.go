@@ -21,3 +21,19 @@ func CaptureDisplay(displayIndex int) (*image.RGBA, error) {
 func CaptureRect(rect image.Rectangle) (*image.RGBA, error) {
 	return Capture(rect.Min.X, rect.Min.Y, rect.Dx(), rect.Dy())
 }
+
+func createImage(rect image.Rectangle) (img *image.RGBA, e error) {
+	img = nil
+	e = errors.New("Cannot create image.RGBA")
+
+	defer func() {
+		err := recover()
+		if err == nil {
+			e = nil
+		}
+	}()
+	// image.NewRGBA may panic if rect is too large.
+	img = image.NewRGBA(rect)
+
+	return img, e
+}

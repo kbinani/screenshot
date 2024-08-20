@@ -1,4 +1,4 @@
-//go:build cgo
+//go:build cgo && darwin
 
 package screenshot
 
@@ -71,8 +71,6 @@ import (
 	"errors"
 	"image"
 	"unsafe"
-
-	"github.com/kbinani/screenshot/internal"
 )
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
@@ -81,7 +79,7 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	}
 
 	rect := image.Rect(0, 0, width, height)
-	img, err := internal.CreateImage(rect)
+	img, err := createImage(rect)
 	if err != nil {
 		return nil, err
 	}

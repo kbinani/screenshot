@@ -1,6 +1,6 @@
 //go:build !s390x && !ppc64le && !darwin && !windows && !freebsd && (linux || openbsd || netbsd)
 
-package internal
+package screenshot
 
 import (
 	"fmt"
@@ -13,7 +13,7 @@ import (
 	"sync/atomic"
 )
 
-var gCounter uint64 = 0
+var gTokenCounter uint64 = 0
 
 func captureDbus(x, y, width, height int) (img *image.RGBA, e error) {
 	c, err := dbus.ConnectSessionBus()
@@ -26,7 +26,7 @@ func captureDbus(x, y, width, height int) (img *image.RGBA, e error) {
 			e = err
 		}
 	}(c)
-	token := atomic.AddUint64(&gCounter, 1)
+	token := atomic.AddUint64(&gTokenCounter, 1)
 	options := map[string]dbus.Variant{
 		"modal":        dbus.MakeVariant(false),
 		"interactive":  dbus.MakeVariant(false),
@@ -85,9 +85,9 @@ func captureDbus(x, y, width, height int) (img *image.RGBA, e error) {
 			if err != nil {
 				return nil, fmt.Errorf("png.Decode(%s) failed: %v", path, err)
 			}
-			canvas, err := CreateImage(image.Rect(0, 0, width, height))
+			canvas, err := createImage(image.Rect(0, 0, width, height))
 			if err != nil {
-				return nil, fmt.Errorf("util.CreateImage(%v) failed: %v", path, err)
+				return nil, fmt.Errorf("createImage(%v) failed: %v", path, err)
 			}
 			draw.Draw(canvas, image.Rect(0, 0, width, height), img, image.Point{x, y}, draw.Src)
 			return canvas, e
