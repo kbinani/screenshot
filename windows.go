@@ -1,9 +1,10 @@
+//go:build windows
+
 package screenshot
 
 import (
 	"errors"
-	"github.com/kbinani/screenshot/internal"
-	win "github.com/lxn/win"
+	"github.com/lxn/win"
 	"image"
 	"syscall"
 	"unsafe"
@@ -19,7 +20,7 @@ var (
 
 func Capture(x, y, width, height int) (*image.RGBA, error) {
 	rect := image.Rect(0, 0, width, height)
-	img, err := internal.CreateImage(rect)
+	img, err := createImage(rect)
 	if err != nil {
 		return nil, err
 	}
