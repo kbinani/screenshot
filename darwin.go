@@ -139,18 +139,6 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 			cgIntersect.size.width, cgIntersect.size.height)
 		C.CGContextDrawImage(ctx, cgDrawRect, image)
 	}
-
-	i := 0
-	for iy := 0; iy < height; iy++ {
-		j := i
-		for ix := 0; ix < width; ix++ {
-			// ARGB => RGBA, and set A to 255
-			img.Pix[j], img.Pix[j+1], img.Pix[j+2], img.Pix[j+3] = img.Pix[j+1], img.Pix[j+2], img.Pix[j+3], 255
-			j += 4
-		}
-		i += img.Stride
-	}
-
 	return img, nil
 }
 
