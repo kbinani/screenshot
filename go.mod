@@ -1,4 +1,4 @@
-module github.com/kbinani/screenshot
+module github.com/Sohimaster/screenshot
 
 go 1.21
 
