@@ -62,7 +62,7 @@ Example
 
 List of Functions
 =======
-* windows.go
+* windows.go ( Depends on https://github.com/lxn/win A Windows API wrapper)
   
 ```
 NumActiveDisplays()
