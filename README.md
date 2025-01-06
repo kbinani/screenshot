@@ -1,4 +1,4 @@
-screenshot
+Screenshot
 ==========
 
 ![](https://github.com/kbinani/screenshot/actions/workflows/build.yml/badge.svg)
@@ -11,7 +11,7 @@ screenshot
 * Supported GOOS: windows, darwin, linux, freebsd, openbsd, and netbsd.
 * `cgo` free except for GOOS=darwin.
 
-example
+Example
 =======
 
 * sample program `main.go`
@@ -60,16 +60,44 @@ example
 	main.go
 	```
 
-coordinate
-=================
-Y-axis is downward direction in this library. The origin of coordinate is upper-left corner of main display. This means coordinate system is similar to Windows OS
-
-license
+List of Functions
 =======
+* windows.go
+  
+```
+NumActiveDisplays()
 
+GetDisplayBounds()
+
+getDesktopWindow()
+
+enumDisplayMonitors()
+
+countupMonitorCallback()
+
+getMonitorBoundsCallback()
+
+getMonitorRealSize()
+```
+
+* screenshot.go
+	
+```
+CaptureDisplay()
+
+CaptureRect()
+
+createImage()
+```
+ 
+Coordinate System
+=================
+The coordinate system is similar to Windows OS in that the he origin of Y-axis coordinate is upper-left corner of main display, in a downward direction.
+
+License
+=======
 MIT Licence
 
-author
+Author
 ======
-
 kbinani
