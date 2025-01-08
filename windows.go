@@ -4,10 +4,11 @@ package screenshot
 
 import (
 	"errors"
-	"github.com/lxn/win"
 	"image"
 	"syscall"
 	"unsafe"
+
+	"github.com/lxn/win"
 )
 
 var (
@@ -102,10 +103,10 @@ func NumActiveDisplays() int {
 }
 
 func GetDisplayBounds(displayIndex int) image.Rectangle {
-	var ctx getMonitorBoundsContext
+	ctx := &getMonitorBoundsContext{}
 	ctx.Index = displayIndex
 	ctx.Count = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(&ctx)))
+	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(ctx)))
 	return image.Rect(
 		int(ctx.Rect.Left), int(ctx.Rect.Top),
 		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
