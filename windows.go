@@ -6,7 +6,6 @@ import (
 	"errors"
 	"github.com/lxn/win"
 	"image"
-	"runtime"
 	"syscall"
 	"unsafe"
 )
@@ -97,60 +96,33 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 }
 
 func NumActiveDisplays() int {
-	var count int = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(countupMonitorCallback), uintptr(unsafe.Pointer(&count)))
+	// It appears that `count` may be relocated after calling enumDisplayMonitors.
+	// Therefore, using `uintptr(unsafe.Pointer(&count))` to obtain memory directly may lead to
+	// reading undefined values. To address this, we're using an approach that allocates memory
+	// directly on the native heap.
+	// Please refer to the discussions on https://github.com/kbinani/screenshot/pull/36 for details
+	var count int
+	hmem := win.GlobalAlloc(win.GMEM_MOVEABLE, unsafe.Sizeof(count))
+	defer win.GlobalFree(hmem)
+	ptr := win.GlobalLock(hmem)
+	defer win.GlobalUnlock(hmem)
+
+	*(*int)(ptr) = 0
+
+	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(countupMonitorCallback), uintptr(ptr))
+	count = *(*int)(ptr)
+
 	return count
 }
 
 func GetDisplayBounds(displayIndex int) image.Rectangle {
-	return GetDisplayBounds4(displayIndex)
-}
-
-func GetDisplayBounds0(displayIndex int) image.Rectangle {
+	// It appears that `ctx` may be relocated after calling enumDisplayMonitors.
+	// Therefore, using `uintptr(unsafe.Pointer(&ctx))` to obtain memory directly may lead to
+	// reading undefined values. To address this, we're using an approach that allocates memory
+	// directly on the native heap.
+	// Please refer to the discussions on https://github.com/kbinani/screenshot/pull/36 for details
 	var ctx getMonitorBoundsContext
-	ctx.Index = displayIndex
-	ctx.Count = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(&ctx)))
-	return image.Rect(
-		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
-}
-
-func GetDisplayBounds1(displayIndex int) image.Rectangle {
-	ctx := &getMonitorBoundsContext{}
-	ctx.Index = displayIndex
-	ctx.Count = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(ctx)))
-	return image.Rect(
-		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
-}
-
-func GetDisplayBounds2(displayIndex int) image.Rectangle {
-	ctx := new(getMonitorBoundsContext)
-	ctx.Index = displayIndex
-	ctx.Count = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(ctx)))
-	runtime.KeepAlive(ctx)
-	return image.Rect(
-		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
-}
-
-func GetDisplayBounds3(displayIndex int) image.Rectangle {
-	ctx := new(getMonitorBoundsContext)
-	ctx.Index = displayIndex
-	ctx.Count = 0
-	ptr := unsafe.Pointer(ctx)
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(ptr))
-	runtime.KeepAlive(ptr)
-	return image.Rect(
-		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
-}
-
-func GetDisplayBounds4(displayIndex int) image.Rectangle {
-	hmem := win.GlobalAlloc(win.GMEM_MOVEABLE, unsafe.Sizeof(getMonitorBoundsContext{}))
+	hmem := win.GlobalAlloc(win.GMEM_MOVEABLE, unsafe.Sizeof(ctx))
 	defer win.GlobalFree(hmem)
 	ptr := win.GlobalLock(hmem)
 	defer win.GlobalUnlock(hmem)
@@ -159,11 +131,11 @@ func GetDisplayBounds4(displayIndex int) image.Rectangle {
 	(*getMonitorBoundsContext)(ptr).Count = 0
 
 	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(ptr))
-	rect := ((*getMonitorBoundsContext)(ptr)).Rect
+	ctx = *(*getMonitorBoundsContext)(ptr)
 
 	return image.Rect(
-		int(rect.Left), int(rect.Top),
-		int(rect.Right), int(rect.Bottom))
+		int(ctx.Rect.Left), int(ctx.Rect.Top),
+		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
 }
 
 func getDesktopWindow() win.HWND {
