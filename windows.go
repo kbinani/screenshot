@@ -95,49 +95,6 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	return img, nil
 }
 
-func NumActiveDisplays() int {
-	// It appears that `count` may be relocated after calling enumDisplayMonitors.
-	// Therefore, using `uintptr(unsafe.Pointer(&count))` to obtain memory directly may lead to
-	// reading undefined values. To address this, we're using an approach that allocates memory
-	// directly on the native heap.
-	// Please refer to the discussions on https://github.com/kbinani/screenshot/pull/36 for details
-	var count int
-	hmem := win.GlobalAlloc(win.GMEM_MOVEABLE, unsafe.Sizeof(count))
-	defer win.GlobalFree(hmem)
-	ptr := win.GlobalLock(hmem)
-	defer win.GlobalUnlock(hmem)
-
-	*(*int)(ptr) = 0
-
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(countupMonitorCallback), uintptr(ptr))
-	count = *(*int)(ptr)
-
-	return count
-}
-
-func GetDisplayBounds(displayIndex int) image.Rectangle {
-	// It appears that `ctx` may be relocated after calling enumDisplayMonitors.
-	// Therefore, using `uintptr(unsafe.Pointer(&ctx))` to obtain memory directly may lead to
-	// reading undefined values. To address this, we're using an approach that allocates memory
-	// directly on the native heap.
-	// Please refer to the discussions on https://github.com/kbinani/screenshot/pull/36 for details
-	var ctx getMonitorBoundsContext
-	hmem := win.GlobalAlloc(win.GMEM_MOVEABLE, unsafe.Sizeof(ctx))
-	defer win.GlobalFree(hmem)
-	ptr := win.GlobalLock(hmem)
-	defer win.GlobalUnlock(hmem)
-
-	(*getMonitorBoundsContext)(ptr).Index = displayIndex
-	(*getMonitorBoundsContext)(ptr).Count = 0
-
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(ptr))
-	ctx = *(*getMonitorBoundsContext)(ptr)
-
-	return image.Rect(
-		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
-}
-
 func getDesktopWindow() win.HWND {
 	ret, _, _ := syscall.Syscall(funcGetDesktopWindow, 0, 0, 0, 0)
 	return win.HWND(ret)
