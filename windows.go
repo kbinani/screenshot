@@ -95,22 +95,6 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	return img, nil
 }
 
-func NumActiveDisplays() int {
-	var count int = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(countupMonitorCallback), uintptr(unsafe.Pointer(&count)))
-	return count
-}
-
-func GetDisplayBounds(displayIndex int) image.Rectangle {
-	var ctx getMonitorBoundsContext
-	ctx.Index = displayIndex
-	ctx.Count = 0
-	enumDisplayMonitors(win.HDC(0), nil, syscall.NewCallback(getMonitorBoundsCallback), uintptr(unsafe.Pointer(&ctx)))
-	return image.Rect(
-		int(ctx.Rect.Left), int(ctx.Rect.Top),
-		int(ctx.Rect.Right), int(ctx.Rect.Bottom))
-}
-
 func getDesktopWindow() win.HWND {
 	ret, _, _ := syscall.Syscall(funcGetDesktopWindow, 0, 0, 0, 0)
 	return win.HWND(ret)
