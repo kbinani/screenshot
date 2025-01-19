@@ -68,6 +68,9 @@ func Capture(x, y, width, height int) (*image.RGBA, error) {
 	}
 	defer win.SelectObject(memory_device, old)
 
+	if x == width || y == height {
+		return nil, errors.New("size failed (width or height are consistent)")
+	}
 	if !win.BitBlt(memory_device, 0, 0, int32(width), int32(height), hdc, int32(x), int32(y), win.SRCCOPY) {
 		return nil, errors.New("BitBlt failed")
 	}
