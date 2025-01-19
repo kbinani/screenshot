@@ -38,7 +38,6 @@ func NumActiveDisplays() (num int) {
 }
 
 // GetDisplayBounds returns the bounds of displayIndex'th display.
-// The main display is displayIndex = 0.
 func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
 	defer func() {
 		e := recover()
@@ -67,15 +66,14 @@ func GetDisplayBounds(displayIndex int) (rect image.Rectangle) {
 		return image.Rectangle{}
 	}
 
-	primary := reply.ScreenInfo[0]
-	x0 := int(primary.XOrg)
-	y0 := int(primary.YOrg)
-
+	// Retrieve the screen info for the target display
 	screen := reply.ScreenInfo[displayIndex]
-	x := int(screen.XOrg) - x0
-	y := int(screen.YOrg) - y0
+	x := int(screen.XOrg)
+	y := int(screen.YOrg)
 	w := int(screen.Width)
 	h := int(screen.Height)
+
+	// Use absolute coordinates without offsets
 	rect = image.Rect(x, y, x+w, y+h)
 	return rect
 }
