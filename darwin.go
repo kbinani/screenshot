@@ -38,6 +38,7 @@ static CGImageRef capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, 
             config.sourceRect = diIntersectDisplayLocal;
             config.width = diIntersectDisplayLocal.size.width;
             config.height = diIntersectDisplayLocal.size.height;
+            config.showsCursor = NO;
             [SCScreenshotManager captureImageWithFilter:filter
                                           configuration:config
                                       completionHandler:^(CGImageRef img, NSError* error) {
