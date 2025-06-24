@@ -3,7 +3,7 @@
 package screenshot
 
 /*
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > 140400
 #cgo CFLAGS: -x objective-c
 #cgo LDFLAGS: -framework CoreGraphics -framework CoreFoundation -framework ScreenCaptureKit
 #include <ScreenCaptureKit/ScreenCaptureKit.h>
@@ -13,7 +13,7 @@ package screenshot
 #include <CoreGraphics/CoreGraphics.h>
 
 static CGImageRef capture(CGDirectDisplayID id, CGRect diIntersectDisplayLocal, CGColorSpaceRef colorSpace) {
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > MAC_OS_VERSION_14_4
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ > 140400
     dispatch_semaphore_t semaphore = dispatch_semaphore_create(0);
     __block CGImageRef result = nil;
     [SCShareableContent getShareableContentWithCompletionHandler:^(SCShareableContent* content, NSError* error) {
