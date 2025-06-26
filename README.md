@@ -9,7 +9,8 @@ screenshot
 * Go library to capture desktop screen.
 * Multiple display supported.
 * Supported GOOS: windows, darwin, linux, freebsd, openbsd, and netbsd.
-* `cgo` free except for GOOS=darwin.
+* `cgo` free except for GOOS=darwin. (min MAC_OS_VERSION_14_4)
+  
 
 example
 =======
